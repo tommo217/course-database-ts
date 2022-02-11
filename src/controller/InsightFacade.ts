@@ -26,7 +26,19 @@ export default class InsightFacade implements IInsightFacade {
 	}
 
 	public performQuery(query: unknown): Promise<InsightResult[]> {
-		return Promise.reject("Not implemented.");
+		console.log(typeof query);
+		let queryObj;
+		console.log(typeof query);
+		if (typeof query === "string") {
+			let queryStr = query as string;
+			queryObj = JSON.parse(queryStr);
+		} else {
+			queryObj = query;
+		}
+
+
+		return Promise.resolve([{test:"test"}]);
+		// return Promise.reject("Not implemented.");
 	}
 
 	public listDatasets(): Promise<InsightDataset[]> {
@@ -45,3 +57,22 @@ export default class InsightFacade implements IInsightFacade {
 		// ]);
 	}
 }
+
+
+/**
+ * TODO: Delete/Comment out! test script for performQuery
+ */
+let facade: InsightFacade = new InsightFacade();
+let query = {
+	WHERE: {
+		GT: {courses_avg: 97}
+	},
+	OPTIONS: {
+		COLUMNS: ["courses_dept","courses_avg"],
+		ORDER: "courses_avg"
+	}
+};
+
+
+facade.performQuery(JSON.stringify(query));
+// facade.performQuery(query);
