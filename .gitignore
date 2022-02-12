@@ -17,3 +17,6 @@ data/
 .DS_Store
 .env
 *.log
+
+# Query format reference
+#query.bnf

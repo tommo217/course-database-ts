@@ -18,20 +18,19 @@ describe("InsightFacade", function () {
 	const persistDir = "./data";
 	const datasetContents = new Map<string, string>();
 
-	// Reference any datasets you've added to test/resources/archives here and they will
-	// automatically be loaded in the 'before' hook.
+	// Add future datasets here
 	const datasetsToLoad: {[key: string]: string} = {
 		courses: "./test/resources/archives/courses.zip",
 	};
 
-	// Load all datasets
+	// Load datasets
 	before(function () {
-		// This section runs once and loads all datasets specified in the datasetsToLoad object
+		// Loads all datasets in datasetsToLoad
 		for (const key of Object.keys(datasetsToLoad)) {
 			const content = fs.readFileSync(datasetsToLoad[key]).toString("base64");
 			datasetContents.set(key, content);
 		}
-		// Just in case there is anything hanging around from a previous run
+		// Clear previous run (if it exists)
 		fs.removeSync(persistDir);
 	});
 
@@ -41,8 +40,8 @@ describe("InsightFacade", function () {
 		});
 
 		beforeEach(function () {
-			// This section resets the insightFacade instance
-			// This runs before each test
+			// Resets the insightFacade instance
+			// Runs before each test
 			console.info(`BeforeTest: ${this.currentTest?.title}`);
 			insightFacade = new InsightFacade();
 		});
@@ -52,8 +51,8 @@ describe("InsightFacade", function () {
 		});
 
 		afterEach(function () {
-			// This section resets the data directory (removing any cached data)
-			// This runs after each test, which should make each test independent from the previous one
+			// Resets the data directory (removing any cached data)
+			// Makes each test independent
 			console.info(`AfterTest: ${this.currentTest?.title}`);
 			fs.removeSync(persistDir);
 		});
