@@ -1,4 +1,8 @@
-export class Section {
+export interface IndexableSection{
+	[key: string]: string | number | undefined;  // for typecast as dict
+}
+
+export class Section{
 	public avg?: number;
 	public pass?: number;
 	public fail?: number;

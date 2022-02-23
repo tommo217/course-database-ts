@@ -6,7 +6,7 @@ import {
 	InsightResult,
 	NotFoundError
 } from "./IInsightFacade";
-import {parseQuery, Query} from "./Query";
+import {parseQuery, Query} from "../model/Query";
 
 /**
  * This is the main programmatic entry point for the project.
@@ -30,7 +30,6 @@ export default class InsightFacade implements IInsightFacade {
 		return new Promise<InsightResult[]>( (resolve, reject) => {
 			try {
 				let queryObj;
-				// console.log("Type of query: ", typeof query);
 				if (typeof query === "string") {
 					let queryStr = query as string;
 					queryObj = JSON.parse(queryStr);
