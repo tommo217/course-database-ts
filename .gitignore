@@ -19,4 +19,4 @@ data/
 *.log
 
 # Query format reference
-query.bnf
+#query.bnf
