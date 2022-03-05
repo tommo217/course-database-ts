@@ -169,7 +169,6 @@ export default class InsightFacade implements IInsightFacade {
 				}
 			}
 		});
-	}
 
 	public listDatasets(): Promise<InsightDataset[]> {
 		return new Promise<InsightDataset[]>(function(resolve, reject) {
@@ -224,7 +223,6 @@ function queryForResult(q: Query): InsightResult[]{
 	// TODO optimise
 	if (results.length > resultLimit) {
 		throw new ResultTooLargeError("query result exceeds " + resultLimit);
-	}
 
 	q.options.sortRsults(results);
 	return results;
