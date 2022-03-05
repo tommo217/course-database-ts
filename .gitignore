@@ -20,3 +20,5 @@ data/
 
 # Query format reference
 #query.bnf
+
+.nyc_output

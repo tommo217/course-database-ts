@@ -4,9 +4,13 @@ import {
 	InsightDatasetKind,
 	InsightError,
 	InsightResult,
-	NotFoundError
+	ResultTooLargeError
 } from "./IInsightFacade";
 import {parseQuery, Query} from "../model/Query";
+import * as fs from "fs";
+import {Section} from "./Section";
+
+export const dataDir = "./data/";
 
 /**
  * This is the main programmatic entry point for the project.
@@ -36,97 +40,85 @@ export default class InsightFacade implements IInsightFacade {
 				} else {
 					queryObj = query;
 				}
-				let q: Query = parseQuery(queryObj);
-				// console.log(q);
-				resolve([{test: "no syntax error"}]);
+				const q: Query = parseQuery(queryObj);
+				const results = queryForResult(q);
+				resolve(results);
 			} catch (err) {
-				if (err instanceof Error) {
+				if (err instanceof ResultTooLargeError) {
+					reject(err);
+				} else if (err instanceof Error) {
 					reject(new InsightError(err.message));
 				} else {
-					reject(new InsightError());
+					reject(new InsightError("Unknown error"));
 				}
 			}
 		});
-
-
 		// return Promise.reject("Not implemented.");
 	}
 
 	public listDatasets(): Promise<InsightDataset[]> {
 		return Promise.reject("Not implemented.");
-		// return Promise.resolve([
-		// 	{
-		// 		id: "courses-2",
-		// 		kind: InsightDatasetKind.Courses,
-		// 		numRows: 64612,
-		// 	},
-		// 	{
-		// 		id: "courses",
-		// 		kind: InsightDatasetKind.Courses,
-		// 		numRows: 64612,
-		// 	}
-		// ]);
 	}
 }
 
 
 /**
- * TODO: Delete/Comment out! test script for performQuery
+ * Read the file in query to search for query result
+ * if result size exceeds 5000, throw error.
  */
-// let facade: InsightFacade = new InsightFacade();
-// let query = {
-// 	WHERE: {
-// 		// GT: {courses_avg: 97}
-// 		IS:{courses_dept:"math"}
-// 	},
-// 	OPTIONS: {
-// 		COLUMNS: ["courses_dept","courses_avg"],
-// 		ORDER: "courses_avg"
-// 	}
-// };
-//
-// let queryC = {
-// 	WHERE: {
-// 		OR: [
-// 			{
-// 				AND: [
-// 					{
-// 						GT: {
-// 							courses_avg: 90
-// 						}
-// 					},
-// 					{
-// 						IS: {
-// 							courses_dept: "adhe"
-// 						}
-// 					}
-// 				]
-// 			},
-// 			{
-// 				EQ: {
-// 					courses_avg: 95
-// 				}
-// 			}
-// 		]
-// 	},
-// 	OPTIONS: {
-// 		COLUMNS: [
-// 			"courses_dept",
-// 			"courses_id",
-// 			"courses_avg"
-// 		],
-// 		ORDER: "courses_avg"
-// 	}
-// };
-//
-// let queryInvalid = {
-// 	WHERE: {
-// 		// GT: {courses_avg: 97}
-// 		IS:{courses_dept:"math"}
-// 	}
-// };
-//
-//
-// // facade.performQuery(JSON.stringify(query));
-// // let q: Query = parseQuery(queryInvalid);
+function queryForResult(q: Query): InsightResult[]{
+	const resultLimit = 5000;
+	let results: InsightResult[] = [];
+
+	const filePath = dataDir + q.options.idString + ".json";
+	const content: string = fs.readFileSync(filePath, "utf-8");
+	const secStrings = sliceIntoObjects(content);
+
+	// process all sections
+	secStrings.map((secStr) => {
+		processSection(secStr, q, results);
+	});
+
+	// TODO optimise
+	if (results.length > resultLimit) {
+		throw new ResultTooLargeError("query result exceeds " + resultLimit);
+	}
+
+	q.options.sortRsults(results);
+	return results;
+}
+
+/**
+ * Helper, slice content into string array of JSON objects
+ */
+function sliceIntoObjects(content: string): string[] {
+	let secStrings: string[] = [];
+	while(content.indexOf("{") > -1) {
+		const objStart = content.indexOf("{");
+		const objEnd = content.indexOf("}");
+		if (objStart < objEnd) {
+			let next = content.slice(objStart, objEnd + 1);
+			content = content.slice(objEnd + 1); // slice off this object
+			secStrings.push(next);
+		} else {
+			throw new Error("Incorrect dataset format");
+		}
+	}
+	return secStrings;
+}
+
+/**
+ * Filter given section based on query options
+ */
+function processSection(secStr: string, query: Query, results: InsightResult[]) {
+	try {
+		const sec: Section = JSON.parse(secStr);
+		if (query.body.evaluateEntry(sec)) {
+			let res = query.options.transformSections(sec);
+			results.push(res);
+		}
+	} catch (err) {
+		console.warn("Invalid entry in database: " + secStr);
+	}
+}
 

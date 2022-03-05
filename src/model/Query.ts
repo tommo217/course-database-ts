@@ -3,6 +3,8 @@
  */
 import {Filter, parseFilter, mFields, sFields} from "./Filter";
 import {Options} from "./Options";
+import * as fs from "fs";
+import {dataDir} from "../controller/InsightFacade";
 
 interface Query {
 	body: Filter;
@@ -18,13 +20,25 @@ function parseQuery(input: any): Query{
 		let inputOptions = new Options();
 		inputOptions.deserialize(input.OPTIONS);
 
-		return {
+		let q: Query = {
 			body: inputBody,
 			options: inputOptions
 		};
+		verifyIdString(q);
+		return q;
 	}
 
 	throw new Error("Syntax error: WHERE or OPTIONS missing");
+}
+
+// verifies the idstring exists
+function verifyIdString(q: Query) {
+	if (q.body.idString !== q.options.idString) {
+		throw new Error("Semantic error: multiple dbs referenced");
+	}
+	if (!fs.existsSync(dataDir + q.body.idString + ".json")) { // TODO: will need update
+		throw new Error("Semantic error: dataset file does not exist");
+	}
 }
 
 /**

@@ -1,19 +1,37 @@
 {
-  "title": "should reject multiple dataset queries with InsightError",
-  "input": {
-    "WHERE": {
-      "GT": {
-        "courses_avg": 97
-      }
-    },
-    "OPTIONS": {
-      "COLUMNS": [
-        "courses_dept",
-        "courses-2_avg"
-      ],
-      "ORDER": "courses-2_avg"
-    }
-  },
-  "errorExpected": true,
-  "expected": "InsightError"
+	"title": "should reject multiple dataset queries with InsightError",
+	"input": {
+		"WHERE": {
+			"OR": [
+				{
+					"AND": [
+						{
+							"GT": {
+								"courses-1_avg": 90
+							}
+						},
+						{
+							"IS": {
+								"courses_dept": "adhe"
+							}
+						}
+					]
+				},
+				{
+					"EQ": {
+						"courses_avg": 95
+					}
+				}
+			]
+		},
+		"OPTIONS": {
+			"COLUMNS": [
+				"courses_dept",
+				"courses_avg"
+			],
+			"ORDER": "courses_avg"
+		}
+	},
+	"errorExpected": true,
+	"expected": "InsightError"
 }

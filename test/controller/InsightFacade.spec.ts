@@ -15,7 +15,7 @@ import {expect} from "chai";
 describe("InsightFacade", function () {
 	let insightFacade: InsightFacade;
 
-	const persistDir = "./data";
+	const persistDir = "./data/";
 	const datasetContents = new Map<string, string>();
 
 	// Add future datasets here
@@ -31,7 +31,7 @@ describe("InsightFacade", function () {
 			datasetContents.set(key, content);
 		}
 		// Clear previous run (if it exists)
-		fs.removeSync(persistDir);
+		// fs.removeSync(persistDir);
 	});
 
 	describe("Add/Remove/List Dataset", function () {
@@ -54,7 +54,7 @@ describe("InsightFacade", function () {
 			// Resets the data directory (removing any cached data)
 			// Makes each test independent
 			console.info(`AfterTest: ${this.currentTest?.title}`);
-			fs.removeSync(persistDir);
+			// fs.removeSync(persistDir);
 		});
 
 		/**
@@ -252,7 +252,7 @@ describe("InsightFacade", function () {
 
 		after(function () {
 			console.info(`After: ${this.test?.parent?.title}`);
-			fs.removeSync(persistDir);
+			// fs.removeSync(persistDir);
 		});
 
 		type PQErrorKind = "ResultTooLargeError" | "InsightError";

@@ -44,16 +44,19 @@ function parseFilter(input: any): Filter{
 
 // Interface for all filter classes
 interface Filter {
+	idString: string;
 	deserialize(input: any): void;
 	evaluateEntry(section: Section): boolean; // check if section satisfies filter
 }
 
 const logicOps = ["AND", "OR"];
 class LogicComparison implements Filter{
+	public idString: string;
 	protected logic: string; // 0-AND, 1-OR
 	protected filters: Filter[];
 
 	constructor() {
+		this.idString = "";
 		this.logic = "";
 		this.filters = [];
 	}
@@ -81,8 +84,19 @@ class LogicComparison implements Filter{
 				}
 			}
 		}
+		this.parseIdString();
 
 		return result;
+	}
+
+	// Parse and verify all idstring of child filters
+	private parseIdString(){
+		this.idString = this.filters[0].idString;
+		this.filters.forEach((elem) => {
+			if (elem.idString !== this.idString) {
+				throw new Error("Semantic error: multiple db referenced: " + elem.idString);
+			}
+		});
 	}
 
 	public evaluateEntry(entry: Section): boolean {
@@ -226,7 +240,12 @@ class SComparison implements Filter{
 }
 
 class Negation implements Filter{
+	public idString: string;
 	public filter?: Filter;
+
+	constructor() {
+		this.idString = "";
+	}
 
 	// deserialize JSON object; return 1 if successful, 0 if syntactically incorrect
 	public deserialize(input: any): number {
@@ -242,6 +261,7 @@ class Negation implements Filter{
 				return 0;
 			}
 			this.filter = parseFilter(input[op]);
+			this.idString = this.filter.idString;
 			result = 1;
 		}
 
@@ -249,7 +269,6 @@ class Negation implements Filter{
 	}
 
 	public evaluateEntry(section: Section): boolean {
-		// TODO
 		if (this.filter){
 			return !this.filter.evaluateEntry(section);
 		}
