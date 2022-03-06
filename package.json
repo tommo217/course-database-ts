@@ -18,7 +18,7 @@
 	"devDependencies": {
 		"@tsconfig/node16": "1.0.2",
 		"@types/chai": "4.3.0",
-		"@types/chai-as-promised": "7.1.4",
+		"@types/chai-as-promised": "^7.1.5",
 		"@types/express": "4.17.13",
 		"@types/fs-extra": "9.0.13",
 		"@types/mocha": "9.0.0",
@@ -28,7 +28,7 @@
 		"@typescript-eslint/parser": "5.9.0",
 		"@ubccpsc310/folder-test": "2.0.0",
 		"chai": "4.3.4",
-		"chai-as-promised": "7.1.1",
+		"chai-as-promised": "^7.1.1",
 		"chai-http": "4.3.0",
 		"eslint": "^8.8.0",
 		"eslint-plugin-import": "2.25.4",
@@ -47,5 +47,7 @@
 		"pretty": "prettier --config ./.prettierrc.json --write \"./**/*.ts\"",
 		"lint": "eslint src test --ext .ts",
 		"fix": "yarn lint --fix"
-	}
+	},
+	"main": "index.js",
+	"repository": "git@github.students.cs.ubc.ca:CPSC310-2021W-T2/project_team686.git"
 }

@@ -42,13 +42,13 @@ function createSectionObjects(sectionArr: any) {
 	}
 }
 
-function parseInfo(dataArr: string[], dataID: string, dataKind: InsightDatasetKind): number {
+async function parseInfo(dataArr: string[], dataID: string, dataKind: InsightDatasetKind): Promise<string[]> {
 	for (const element of dataArr) { // element is the text string of the course file.
 		let course: any;
 		try{
 			course = JSON.parse(element);// course is the content in each course file
 		} catch (e) {
-			return -1; // Error in parse course file.
+			return Promise.reject(new InsightError("Error in parse course file")); // Error in parse course file.
 		}
 		let sectionsArr = course["result"];// an array holding all the sections in this course
 		if(sectionsArr.length > 0) {// has section data in this course file
@@ -58,21 +58,25 @@ function parseInfo(dataArr: string[], dataID: string, dataKind: InsightDatasetKi
 	}
 	numRows = sectionData.length;
 	if(numRows === 0) {
-		return 0; // reject( new InsightError("No valid section.")); // zero valid sections found in all course files, return InsightError.
+		// zero valid sections found in all course files, return InsightError.
+		return Promise.reject(new InsightError("No valid section"));
 	} else {
-			// save to disk
+		// save to disk
 		let datasetObj = JSON.stringify({dataID, dataKind, numRows, sectionData});
 		let metaData = JSON.stringify({dataID, dataKind, numRows});
-		fs.outputFile( (dataDir + dataID), datasetObj).catch((err) => {
-			return -2; // Write to disk error."
-		}).then(function () {
-			fs.outputFile((metaDir + dataID + "_meta"), metaData).then(() => {
-				storedIDs = fs.readdirSync(dataDir);
-				return 1; // resolve(storedIDs);
-			});
-		});
+
+		try {
+			await fs.outputFile((dataDir + dataID), datasetObj);
+			await fs.outputFile((metaDir + dataID + "_meta"), metaData);
+		} catch (e) {
+			return Promise.reject(new InsightError("Write to disk error"));
+		}
+		const dirents = fs.readdirSync(dataDir, {withFileTypes: true});
+		storedIDs = dirents
+			.filter((entry) => entry.isFile())
+			.map((entry) => entry.name);
+		return Promise.resolve(storedIDs);
 	}
-	return -3;
 }
 
 /**
@@ -117,14 +121,9 @@ export default class InsightFacade implements IInsightFacade {
 					courseData.push(courseString);
 				});
 				Promise.all(courseData).then((array)=>{
-					let res = parseInfo(array, id, kind);
-					if (res === 0) {
-						return reject( new InsightError("No valid section.")); // zero valid sections found in all course files, return InsightError.
-					} else if (res === 1) {
-						return resolve(storedIDs);
-					} else {
-						return reject(new InsightError("Error code " + res + " in parseInfo"));
-					}
+					parseInfo(array, id, kind).then((res) => {
+						return resolve(res);
+					});
 				});
 			}).catch( ()=> {
 				return reject(new InsightError("Not valid zip"));
@@ -182,43 +181,29 @@ export default class InsightFacade implements IInsightFacade {
 			let datasetArr: InsightDataset[] = [];
 			fs.readdir(metaDir, (err, files) => {
 				files.forEach((file) => {
-					let dataset: string; // metadata of one dataset
+					let datasetMeta; // metadata of one dataset
 					// let datasetArr: InsightDataset[] = [];
 					try{
-						dataset = JSON.parse(file);
+						const metaContent = fs.readFileSync(metaDir + file).toString("utf-8");
+						datasetMeta = JSON.parse(metaContent);
 					} catch (e) {
-						return reject(new InsightError("Error in reading stored dataset."));
+						return reject(new InsightError("Error in reading stored metadata: " + metaDir + file));
 					}
-					for (const element of dataset) {
-						let dataID = element[0];
-						let dataKind = element[1];
-						let dataNumRows = element[2];
-						// a struct to store InsightDataset obj
-						let datasetObj: any = {
-							id: dataID,
-							kind: dataKind,
-							numRows: dataNumRows
-						};
-						let datasetInstance = datasetObj as InsightDataset;
-						// let datasetObj = JSON.stringify({dataID, dataKind, dataNumRows});
-						datasetArr.push(datasetInstance);
-					}
+					let dataID = datasetMeta["dataID"];
+					let dataKind = datasetMeta["dataKind"];
+					let dataNumRows = datasetMeta["numRows"];
+					// a struct to store InsightDataset obj
+					let datasetObj: any = {
+						id: dataID,
+						kind: dataKind,
+						numRows: dataNumRows
+					};
+					let datasetInstance = datasetObj as InsightDataset;
+					// let datasetObj = JSON.stringify({dataID, dataKind, dataNumRows});
+					datasetArr.push(datasetInstance);
 				});
+				return resolve(datasetArr);
 			});
-			resolve(datasetArr);
 		});
-		// return Promise.reject("Not implemented.");
-		// return Promise.resolve([
-		// 	{
-		// 		id: "courses-2",
-		// 		kind: InsightDatasetKind.Courses,
-		// 		numRows: 64612,
-		// 	},
-		// 	{
-		// 		id: "courses",
-		// 		kind: InsightDatasetKind.Courses,
-		// 		numRows: 64612,
-		// 	}
-		// ]);
 	}
 }
