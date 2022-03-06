@@ -18,7 +18,7 @@ let sectionData: Section[] = [];// array of the valid section objects
 let numRows: number = 0;
 let storedIDs: string[] = [];// array of all the stored dataset IDs
 let dataDir = "./data/";
-let metaDir = "./meta/";
+let metaDir = "./data/meta/";
 
 function createSectionObjects(sectionArr: any) {
 	for(const sect of sectionArr) {
@@ -82,6 +82,12 @@ function parseInfo(dataArr: string[], dataID: string, dataKind: InsightDatasetKi
  */
 export default class InsightFacade implements IInsightFacade {
 	constructor() {
+		if (!fs.existsSync(dataDir)) {
+			fs.mkdirSync(dataDir);
+		}
+		if (!fs.existsSync(metaDir)) {
+			fs.mkdirSync(metaDir);
+		}
 		console.log("InsightFacadeImpl::init()");
 	}
 
@@ -92,7 +98,6 @@ export default class InsightFacade implements IInsightFacade {
 		if(kind !== InsightDatasetKind.Courses) {
 			return Promise.reject("Not course data");
 		}
-		// let startTime = Date.now();
 
 		return new Promise(function (resolve, reject) {
 			// load zip, check zip validity
@@ -156,7 +161,7 @@ export default class InsightFacade implements IInsightFacade {
 				} else {
 					queryObj = query;
 				}
-				let q: Query = parseQuery(queryObj);
+				// let q: Query = parseQuery(queryObj);
 				// console.log(q);
 				resolve([{test: "no syntax error"}]);
 			} catch (err) {
@@ -200,7 +205,7 @@ export default class InsightFacade implements IInsightFacade {
 					}
 				});
 			});
-			return datasetArr;
+			resolve(datasetArr);
 		});
 		// return Promise.reject("Not implemented.");
 		// return Promise.resolve([
@@ -217,65 +222,3 @@ export default class InsightFacade implements IInsightFacade {
 		// ]);
 	}
 }
-
-
-/**
- * TODO: Delete/Comment out! test script for performQuery
- */
-// let facade: InsightFacade = new InsightFacade();
-// let query = {
-// 	WHERE: {
-// 		// GT: {courses_avg: 97}
-// 		IS:{courses_dept:"math"}
-// 	},
-// 	OPTIONS: {
-// 		COLUMNS: ["courses_dept","courses_avg"],
-// 		ORDER: "courses_avg"
-// 	}
-// };
-//
-// let queryC = {
-// 	WHERE: {
-// 		OR: [
-// 			{
-// 				AND: [
-// 					{
-// 						GT: {
-// 							courses_avg: 90
-// 						}
-// 					},
-// 					{
-// 						IS: {
-// 							courses_dept: "adhe"
-// 						}
-// 					}
-// 				]
-// 			},
-// 			{
-// 				EQ: {
-// 					courses_avg: 95
-// 				}
-// 			}
-// 		]
-// 	},
-// 	OPTIONS: {
-// 		COLUMNS: [
-// 			"courses_dept",
-// 			"courses_id",
-// 			"courses_avg"
-// 		],
-// 		ORDER: "courses_avg"
-// 	}
-// };
-//
-// let queryInvalid = {
-// 	WHERE: {
-// 		// GT: {courses_avg: 97}
-// 		IS:{courses_dept:"math"}
-// 	}
-// };
-//
-//
-// // facade.performQuery(JSON.stringify(query));
-// // let q: Query = parseQuery(queryInvalid);
-
