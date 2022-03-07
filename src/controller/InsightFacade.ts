@@ -19,7 +19,7 @@ let sectionData: Section[] = [];// array of the valid section objects
 let numRows: number = 0;
 let storedIDs: string[] = [];// array of all the stored dataset IDs
 export const dataDir = "./data/";
-let metaDir = "./data/meta/";
+const metaDir = "./data/meta/";
 
 function createSectionObjects(sectionArr: any) {
 	for(const sect of sectionArr) {
@@ -72,12 +72,17 @@ async function parseInfo(dataArr: string[], dataID: string, dataKind: InsightDat
 		} catch (e) {
 			return Promise.reject(new InsightError("Write to disk error"));
 		}
-		const dirents = fs.readdirSync(dataDir, {withFileTypes: true});
-		storedIDs = dirents
-			.filter((entry) => entry.isFile())
-			.map((entry) => entry.name);
+		storedIDs = listStoredDatasets();
 		return Promise.resolve(storedIDs);
 	}
+}
+
+function listStoredDatasets() {
+	const dirents = fs.readdirSync(dataDir, {withFileTypes: true});
+	storedIDs = dirents
+		.filter((entry) => entry.isFile())
+		.map((entry) => entry.name);
+	return storedIDs;
 }
 
 /**
@@ -97,11 +102,15 @@ export default class InsightFacade implements IInsightFacade {
 	}
 
 	public addDataset(id: string, content: string, kind: InsightDatasetKind): Promise<string[]> {
+		sectionData = []; // TODO: change when implementing cache
 		if(id === " ") {
-			return Promise.reject("Empty id");
+			return Promise.reject(new InsightError("Empty id"));
 		}
 		if(kind !== InsightDatasetKind.Courses) {
 			return Promise.reject("Not course data");
+		}
+		if (listStoredDatasets().includes(id)) {
+			return Promise.reject(new InsightError("dataset already exists"));
 		}
 
 		return new Promise(function (resolve, reject) {
