@@ -36,7 +36,7 @@ function verifyIdString(q: Query) {
 	if (q.body.idString !== q.options.idString) {
 		throw new Error("Semantic error: multiple dbs referenced");
 	}
-	if (!fs.existsSync(dataDir + q.body.idString + ".json")) { // TODO: will need update
+	if (!fs.existsSync(dataDir + q.body.idString)) {
 		throw new Error("Semantic error: dataset file does not exist");
 	}
 }

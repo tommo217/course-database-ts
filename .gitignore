@@ -12,6 +12,7 @@ dist/
 
 # Persist Dir
 data/
+meta/
 
 # Normal Things
 .DS_Store
@@ -21,4 +22,4 @@ data/
 # Query format reference
 #query.bnf
 
-.nyc_output
+.nyc_output/
