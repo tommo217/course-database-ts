@@ -1,0 +1,19 @@
+{
+  "title": "should reject queries for non-existing dataset with InsightError",
+  "input": {
+      "WHERE": {
+        "GT": {
+          "non-exist_avg": 97
+        }
+      },
+      "OPTIONS": {
+        "COLUMNS": [
+          "non-exist_dept",
+          "non-exist_avg"
+        ],
+        "ORDER": "non-exist_avg"
+      }
+    },
+  "errorExpected": true,
+  "expected": "InsightError"
+}
