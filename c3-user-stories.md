@@ -20,29 +20,30 @@ point for determining the evaluation standards of the current year.
 
 #### Definitions of Done(s)
 <ins>Scenario 1: Valid Search Criteria</ins>  
-Given: the user is on the course average query page  
+Given: the user is on the query page for course information  
 When: a valid pair of course code and time range is entered, and "search" is clicked  
 Then: the website displays the name and average score of the section in the specified period
 
 <ins>Scenario 2: Invalid Search Criteria</ins>  
-Given: the user is on the course average query page  
+Given: the user is on the query page for course information   
 When: either an invalid course code or time range is entered, and "search" is clicked  
 Then: the website shows red text over the invalid field
 
 
 ## User Story 2
-As a UBC staff, I want to be able to find a list of classrooms that have over 200 seats, 
-so that I can potentially hold an exam there. 
+As an event organiser, I want to be able to find classrooms with at least 20 seats and
+movable tables, so that group discussions can be carried out. 
 
 #### Definitions of Done(s) 
 <ins>Scenario 1: Valid Search Criteria</ins>  
-Given: The user is on the classroom searching page/section  
-When: The user enters a valid range or seats is entered using a sliding bar, and "search" is clicked  
-Then: the website shows a table showing the information of rooms that fit the criteria.
+Given: The user is on the room searching page/section  
+When: The user enters a valid 'minimum seats' number and selects the desired furniture type(s), 
+and then clicks "search".  
+Then: the website shows a table listing the information of rooms that fit the criteria.  
 
 <ins>Scenario 2: Invalid Search Criteria</ins>  
-Given: The user is on the classroom searching page/section  
-When: The user enters an number that exceeds all classroom capacity, and "search" is clicked  
+Given: The user is on the room searching page/section   
+When: The user enters an invalid 'minimum seats' number  
 Then: The website remains in search page and shows the user no room with such capacity is found.
 
 
