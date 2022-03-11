@@ -51,12 +51,12 @@ export interface IInsightFacade {
 	 * @return Promise <string[]>
 	 *
 	 * The promise should fulfill on a successful add, reject for any failures.
-	 * The promise should fulfill with a string array,
+	 * The promise should fulfill with a string  is only whitespace characters.
+	 * If id is the same as the id of an already addedarray,
 	 * containing the ids of all currently added datasets upon a successful add.
 	 * The promise should reject with an InsightError describing the error.
 	 *
-	 * An id is invalid if it contains an underscore, or is only whitespace characters.
-	 * If id is the same as the id of an already added dataset, the dataset should be rejected and not saved.
+	 * An id is invalid if it contains an underscore, or dataset, the dataset should be rejected and not saved.
 	 *
 	 * After receiving the dataset, it should be processed into a data structure of
 	 * your design. The processed data structure should be persisted to disk; your

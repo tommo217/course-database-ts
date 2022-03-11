@@ -1,21 +1,9 @@
 /**
- * Given the query JSON, return query struct with body & options
+ * 'Filters' portion of the query object
  */
-function parseQuery(input: any): Query{
-	if (input.WHERE !== undefined && input.OPTIONS !== undefined) {
-		let inputBody = parseFilter(input.WHERE);
-		let inputOptions = new Options();
-		inputOptions.deserialize(input.OPTIONS);
 
-		return {
-			body: inputBody,
-			options: inputOptions
-		};
-	}
-
-	throw new Error("Syntax error: WHERE or OPTIONS missing");
-}
-
+import {IndexableSection, Section} from "../controller/Section";
+import {parseKey} from "./Query";
 
 /**
  * Given a JSON object of query BODY, return custom filter class
@@ -54,82 +42,21 @@ function parseFilter(input: any): Filter{
 	throw new Error("Parsing failed, syntax error");
 }
 
-/**
- * Struct and class definitions
- */
-interface Query {
-	body: Filter;
-	options: Options;
-}
-
-class Options {
-	public idString: string; // specifies database
-	public columns: string[];
-	public order: string;
-
-	constructor() {
-		this.idString = "";
-		this.columns = [];
-		this.order = "";
-	}
-
-	public deserialize(input: any) {
-		if (input.COLUMNS !== undefined) {
-			for (let i in input.COLUMNS) {
-				let [idStr, field] = parseKey(input.COLUMNS[i], 2);
-				this.columns.push(field);
-				if (this.idString === "") {
-					this.idString = idStr;
-				} else if (this.idString !== idStr) {
-					throw new Error("Syntax error: multiple db referenced: " + idStr);
-				}
-			}
-
-			if (input.ORDER !== undefined) {
-				this.order = input.ORDER;
-				return;
-			}
-		}
-		throw new Error("Syntax error: missing COLUMNS or ORDER");
-	}
-}
-
-/**
- * parse mkey or skey as a tuple of idstring and fields
- * @param keyType: 0-mkey 1-skey 2-either
- */
-function parseKey(key: string, keyType: number): [string,string] {
-	let fields: string[];
-	if (keyType === 0) {
-		fields = mFields;
-	} else if (keyType === 1){
-		fields = sFields;
-	} else {
-		fields = mFields.concat(sFields);
-	}
-	let keys = key.split("_");
-	if (keys.length === 2) {
-		if (fields.includes(keys[1])) {
-			return [keys[0], keys[1]];
-		}
-	}
-	throw new Error("Syntax error: invalid key" + key);
-}
-
 // Interface for all filter classes
 interface Filter {
+	idString: string;
 	deserialize(input: any): void;
-	// TODO: each filter can filter an input from our dataset
-	// TODO: return a promise?
-	filterEntries(entries: unknown): unknown;
+	evaluateEntry(section: Section): boolean; // check if section satisfies filter
 }
 
 const logicOps = ["AND", "OR"];
 class LogicComparison implements Filter{
+	public idString: string;
 	protected logic: string; // 0-AND, 1-OR
 	protected filters: Filter[];
 
 	constructor() {
+		this.idString = "";
 		this.logic = "";
 		this.filters = [];
 	}
@@ -157,12 +84,29 @@ class LogicComparison implements Filter{
 				}
 			}
 		}
+		this.parseIdString();
 
 		return result;
 	}
 
-	public filterEntries(entries: unknown) {
-		// TODO
+	// Parse and verify all idstring of child filters
+	private parseIdString(){
+		this.idString = this.filters[0].idString;
+		this.filters.forEach((elem) => {
+			if (elem.idString !== this.idString) {
+				throw new Error("Semantic error: multiple db referenced: " + elem.idString);
+			}
+		});
+	}
+
+	public evaluateEntry(entry: Section): boolean {
+		// TODO: compare against speed of iterative evaluation of filters
+		let evals = this.filters.map((filter) => filter.evaluateEntry(entry));
+		if (this.logic === logicOps[0]) { // AND
+			return !evals.includes(false); // true if none of the filters evaluate to false
+		} else { // OR
+			return evals.includes(true); // true if one of the filters evaluate to true
+		}
 	}
 }
 
@@ -207,16 +151,38 @@ class MComparison implements Filter{
 		return result;
 	}
 
-	public filterEntries(entries: unknown) {
-		// TODO
+	public evaluateEntry(entry: Section): boolean {
+		let entryDic = entry as IndexableSection;
+		// guard for non-existent & incorrectly formatted value
+		if (typeof entryDic[this.mfield] === "string"
+			|| entryDic === undefined) {
+			throw new Error("Invalid entry: " + entryDic[this.mfield]);
+		}
+
+		return this.compareVal(entryDic[this.mfield] as number);
+	}
+
+	// Compare given number to this.num by the operator
+	private compareVal(val: number): boolean {
+		switch (this.mComparator){
+			case (mComparators[0]):  // LT
+				return val < this.num;
+			case (mComparators[1]): // GT
+				return val > this.num;
+			case(mComparators[2]): // EQ
+				return val === this.num;
+			default:
+				throw new Error("mComparator initialised incorrectly: " + this.mComparator);
+		}
 	}
 }
 
 const sFields = ["dept", "id", "instructor", "title", "uuid"];
+const inputFormat = /^[*]?[^*]*[*]?$/;
 class SComparison implements Filter{
 	public idString: string;
 	public sfield: string;
-	public inputStr: string; // TODO: check non-preceding *s
+	public inputStr: string; // includes wildcards
 
 	constructor() {
 		this.idString = ""; // id of the referenced dataset
@@ -243,20 +209,43 @@ class SComparison implements Filter{
 			}
 			for (let skey in input[op]) {
 				[this.idString, this.sfield] = parseKey(skey, 1);
-				this.inputStr = input[op][skey];
-				result = 1;
+				if (inputFormat.test(input[op][skey])) { // check format
+					this.inputStr = input[op][skey];
+					result = 1;
+				} else {
+					return 0;
+				}
 			}
 		}
 		return result;
 	}
 
-	public filterEntries(entries: unknown) {
-		// TODO
+	public evaluateEntry(entry: Section): boolean {
+		let entryDic = entry as IndexableSection;
+		// guard for non-existent & incorrectly formatted value
+		if (entryDic === undefined
+			|| typeof entryDic[this.sfield] === "number") {
+			throw new Error("Invalid entry: " + entryDic[this.sfield]);
+		}
+
+		return this.compareStr(entryDic[this.sfield] as string);
+	}
+
+	private compareStr(str: string): boolean {
+		const matchPattern = RegExp("^"
+			+ this.inputStr.replaceAll("*", ".*")
+			+ "$");
+		return matchPattern.test(str);
 	}
 }
 
 class Negation implements Filter{
+	public idString: string;
 	public filter?: Filter;
+
+	constructor() {
+		this.idString = "";
+	}
 
 	// deserialize JSON object; return 1 if successful, 0 if syntactically incorrect
 	public deserialize(input: any): number {
@@ -272,15 +261,19 @@ class Negation implements Filter{
 				return 0;
 			}
 			this.filter = parseFilter(input[op]);
+			this.idString = this.filter.idString;
 			result = 1;
 		}
 
 		return result;
 	}
 
-	public filterEntries(entries: unknown) {
-		// TODO
+	public evaluateEntry(section: Section): boolean {
+		if (this.filter){
+			return !this.filter.evaluateEntry(section);
+		}
+		throw new Error("Negation lacks filter");
 	}
 }
 
-export {parseQuery, Query, Filter, Options};
+export {Filter, parseFilter, sFields, mFields, logicOps};

@@ -1,0 +1,12 @@
+{
+  "title": "should reject queries missing option field",
+  "input": {
+    "WHERE": {
+      "GT": {
+        "non-exist_avg": 97
+      }
+    }
+  },
+  "errorExpected": true,
+  "expected": "InsightError"
+}
