@@ -35,11 +35,17 @@ As a UBC staff, I want to be able to find a list of classrooms that have over 20
 so that I can potentially hold an exam there. 
 
 #### Definitions of Done(s) 
+<ins>Scenario 1: Valid Search Criteria</ins>  
+Given: The user is on the classroom searching page/section  
+When: The user enters a valid range or seats is entered using a sliding bar, and "search" is clicked  
+Then: the website shows a table showing the information of rooms that fit the criteria.
 
-Given: the user is on the classroom searching page/section  
-When: a valid range or seats is entered using a sliding bar, and "search" is clicked  
-Then: the website shows a table showing the information of rooms that fit the criteria; 
-or if no room is found, indicate so on the page
+<ins>Scenario 2: Invalid Search Criteria</ins>  
+Given: The user is on the classroom searching page/section  
+When: The user enters an number that exceeds all classroom capacity, and "search" is clicked  
+Then: The website remains in search page and shows the user no room with such capacity is found.
+
+
 
 ## Others
 You may provide any additional user stories + DoDs in this section for general TA feedback.  
