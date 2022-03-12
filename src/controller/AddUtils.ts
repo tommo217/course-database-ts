@@ -55,12 +55,12 @@ export class AddUtils {
 		return sectionData.length;
 	}
 
-	public async writeToDisc(datasetID: string, kind: InsightDatasetKind, numRow: number,  sectionData: Section[]) {
+	public writeToDisc(datasetID: string, kind: InsightDatasetKind, numRow: number,  sectionData: Section[]) {
 		let datasetObj = JSON.stringify({datasetID, kind, numRow, sectionData});
 		let metaData = JSON.stringify({datasetID, kind, numRow});
 		try {
-			await fs.outputFile((dataDir + datasetID), datasetObj);
-			await fs.outputFile((metaDir + datasetID + "_meta"), metaData);
+			fs.outputFileSync((dataDir + datasetID), datasetObj);
+			fs.outputFileSync((metaDir + datasetID + "_meta"), metaData);
 		} catch (e) {
 			// return Promise.reject(new InsightError("Write to disk error"));
 			console.log(e);

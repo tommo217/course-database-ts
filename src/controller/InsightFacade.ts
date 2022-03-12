@@ -114,7 +114,7 @@ export default class InsightFacade implements IInsightFacade {
 							coursesCache[id] = sectionData;
 							// write to disc
 							// numRows = sectionData.length;
-							utils.writeToDisc(id, kind, numRows, sectionData).then();
+							utils.writeToDisc(id, kind, numRows, sectionData);
 							// resolve with list of stored datasets
 							return resolve(Object.keys(coursesCache));
 						} else {
