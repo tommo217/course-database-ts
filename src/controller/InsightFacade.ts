@@ -10,16 +10,34 @@ import {Section} from "./Section";
 import {parseQuery, Query} from "../model/Query";
 import * as fs from "fs-extra";
 import JSZip from "jszip";
-import {readdir} from "fs";
+import {AddUtils} from "./AddUtils";
 
 let zip = new JSZip();
+let utils = new AddUtils();
 let courseString: string;// hold string data of one course
 let courseData: string[] = [];// array containing each course
 let sectionData: Section[] = [];// array of the valid section objects
 let numRows: number = 0;
 let storedIDs: string[] = [];// array of all the stored dataset IDs
 export const dataDir = "./data/";
-const metaDir = "./data/meta/";
+export const courseDir = "./courses/";
+export const roomDir = "./rooms";
+export const metaDir = "./data/meta/";
+
+/**
+ * Cache for datasets
+ */
+interface CoursesCache {
+	[idString: string]: Section[];
+}
+let coursesCache: CoursesCache = {};
+
+interface RoomsCache {
+	[idString: string]: any[];
+}
+let roomsCache: RoomsCache = {};
+// coursesCache["course"] = sectionData;
+
 
 function createSectionObjects(sectionArr: any) {
 	for(const sect of sectionArr) {
@@ -43,39 +61,9 @@ function createSectionObjects(sectionArr: any) {
 	}
 }
 
-async function parseInfo(dataArr: string[], dataID: string, dataKind: InsightDatasetKind): Promise<string[]> {
-	for (const element of dataArr) { // element is the text string of the course file.
-		let course: any;
-		try{
-			course = JSON.parse(element);// course is the content in each course file
-		} catch (e) {
-			return Promise.reject(new InsightError("Error in parse course file")); // Error in parse course file.
-		}
-		let sectionsArr = course["result"];// an array holding all the sections in this course
-		if(sectionsArr.length > 0) {// has section data in this course file
-				// check all sections, extract query keys and put into Section object, skip invalid sections
-			createSectionObjects(sectionsArr);
-		}
-	}
-	numRows = sectionData.length;
-	if(numRows === 0) {
-		// zero valid sections found in all course files, return InsightError.
-		return Promise.reject(new InsightError("No valid section"));
-	} else {
-		// save to disk
-		let datasetObj = JSON.stringify({dataID, dataKind, numRows, sectionData});
-		let metaData = JSON.stringify({dataID, dataKind, numRows});
-
-		try {
-			await fs.outputFile((dataDir + dataID), datasetObj);
-			await fs.outputFile((metaDir + dataID + "_meta"), metaData);
-		} catch (e) {
-			return Promise.reject(new InsightError("Write to disk error"));
-		}
-		storedIDs = listStoredDatasets();
-		return Promise.resolve(storedIDs);
-	}
-}
+// async function parseInfo(dataArr: string[], dataID: string, dataKind: InsightDatasetKind): Promise<string[]> {
+//
+// }
 
 function listStoredDatasets() {
 	const dirents = fs.readdirSync(dataDir, {withFileTypes: true});
@@ -98,43 +86,56 @@ export default class InsightFacade implements IInsightFacade {
 		if (!fs.existsSync(metaDir)) {
 			fs.mkdirSync(metaDir);
 		}
+
 		console.log("InsightFacadeImpl::init()");
 	}
 
 	public addDataset(id: string, content: string, kind: InsightDatasetKind): Promise<string[]> {
-		sectionData = []; // TODO: change when implementing cache
+		sectionData = [];
+		courseData = [];
 		if(id === " ") {
 			return Promise.reject(new InsightError("Empty id"));
-		}
-		if(kind !== InsightDatasetKind.Courses) {
-			return Promise.reject("Not course data");
 		}
 		if (listStoredDatasets().includes(id)) {
 			return Promise.reject(new InsightError("dataset already exists"));
 		}
-
 		return new Promise(function (resolve, reject) {
 			// load zip, check zip validity
 			zip.loadAsync(content, {base64: true}).then(function(ZipObj: any) {
-				// check courses folder exists using fs.promises.access(file, fs.constants.F_OK)
-				fs.access(dataDir, function(err){
-					if(err) {
+				if(kind === InsightDatasetKind.Courses) {
+					if(zip.folder(/courses/).length <= 0){
 						return reject(new InsightError("No courses folder."));
 					}
-				});
-				// 保留以上在addDataset， 下面handling放helper里
-				// handle course data
-				// handle room data
-				// use number to reflect whether helper successed or failed.
-				ZipObj.folder("courses")?.forEach(async (relativePath: string, file: any) => {
-					courseString = file.async("string");
-					courseData.push(courseString);
-				});
-				Promise.all(courseData).then((array)=>{
-					parseInfo(array, id, kind).then((res) => {
-						return resolve(res);
+					// open courses folder and parse info
+					ZipObj.folder("courses")?.forEach((relativePath: string, file: any) => {
+						courseString = file.async("string");
+						courseData.push(courseString);
 					});
-				});
+					Promise.all(courseData).then((array)=> {
+						numRows = utils.parseCourse(array, id, storedIDs, sectionData);
+						if(numRows > 0) {
+							// store in cache
+							coursesCache[id] = sectionData;
+							// write to disc
+							// numRows = sectionData.length;
+							utils.writeToDisc(id, kind, numRows, sectionData);
+							// resolve with list of stored datasets
+							return resolve(Object.keys(coursesCache));
+						} else {
+							return reject(new InsightError("No valid sections."));
+						}
+					});
+				} else if (kind === InsightDatasetKind.Rooms) {
+					fs.access(roomDir, function(err){
+						if(err) {
+							return reject(new InsightError("No courses folder."));
+						}
+					});
+					// C2 implementation
+				} else {
+					return Promise.reject("Unknown dataset kind.");
+				}
+
 			}).catch( ()=> {
 				return reject(new InsightError("Not valid zip"));
 			});
@@ -152,7 +153,7 @@ export default class InsightFacade implements IInsightFacade {
 				}catch (err) {
 					return reject(new InsightError("Error in deleting file."));
 				}
-				return resolve("Removed " + id);
+				return resolve(id);
 			} else {
 				return reject(new InsightError("ID does not exist."));
 			}
@@ -197,9 +198,9 @@ export default class InsightFacade implements IInsightFacade {
 					} catch (e) {
 						return reject(new InsightError("Error in reading stored metadata: " + metaDir + file));
 					}
-					let dataID = datasetMeta["dataID"];
-					let dataKind = datasetMeta["dataKind"];
-					let dataNumRows = datasetMeta["numRows"];
+					let dataID = datasetMeta["datasetID"];
+					let dataKind = datasetMeta["kind"];
+					let dataNumRows = datasetMeta["numRow"];
 					// a struct to store InsightDataset obj
 					let datasetObj: any = {
 						id: dataID,
@@ -247,7 +248,10 @@ function queryForResult(q: Query): InsightResult[]{
  */
 function sliceIntoObjects(content: string): string[] {
 	let secStrings: string[] = [];
-	while(content.indexOf("{") > -1) {
+	if (content.indexOf("[") > 0) {
+		content = content.slice(content.indexOf("["));
+	}
+	while (content.indexOf("{") > -1) {
 		const objStart = content.indexOf("{");
 		const objEnd = content.indexOf("}");
 		if (objStart < objEnd) {
@@ -272,7 +276,8 @@ function processSection(secStr: string, query: Query, results: InsightResult[]) 
 			results.push(res);
 		}
 	} catch (err) {
-		console.warn("Invalid entry in database: " + secStr);
+		console.warn("Error in reading section data: " + secStr);
+		console.log(err);
 	}
 }
 

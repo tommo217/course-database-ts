@@ -42,26 +42,26 @@ function verifyIdString(q: Query) {
 }
 
 /**
- * parse mkey or skey as a tuple of idstring and fields
+ * Helper; Parse key as a tuple of valid idstring and fields
  * @param key - original mkey or skey
- * @param keyType - 0-mkey 1-skey 2-either Other-either
+ * @param fields - accepted range of fields
  */
-function parseKey(key: string, keyType: number): [string,string] {
-	let fields: string[];
-	if (keyType === 0) {
-		fields = mFields;
-	} else if (keyType === 1){
-		fields = sFields;
-	} else {
-		fields = mFields.concat(sFields);
-	}
+function parseKey(key: string, fields: string[]): [string,string] {
+	// let fields: string[];
+	// if (keyType === 0) {
+	// 	fields = mFields;
+	// } else if (keyType === 1){
+	// 	fields = sFields;
+	// } else {
+	// 	fields = mFields.concat(sFields);
+	// }
 	let keys = key.split("_");
 	if (keys.length === 2) {
 		if (fields.includes(keys[1])) {
 			return [keys[0], keys[1]];
 		}
 	}
-	throw new Error("Syntax error: invalid key" + key);
+	throw new Error("Syntax error: field " + key + "not in accepted range.");
 }
 
 export {Query, parseQuery, parseKey};

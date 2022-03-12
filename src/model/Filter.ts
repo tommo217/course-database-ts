@@ -143,7 +143,7 @@ class MComparison implements Filter{
 				return 0;
 			}
 			for (let mkey in input[op]) {
-				[this.idString, this.mfield] = parseKey(mkey, 0);
+				[this.idString, this.mfield] = parseKey(mkey, mFields);
 				this.num = input[op][mkey];
 				result = 1;
 			}
@@ -208,7 +208,7 @@ class SComparison implements Filter{
 				return 0;
 			}
 			for (let skey in input[op]) {
-				[this.idString, this.sfield] = parseKey(skey, 1);
+				[this.idString, this.sfield] = parseKey(skey, sFields);
 				if (inputFormat.test(input[op][skey])) { // check format
 					this.inputStr = input[op][skey];
 					result = 1;
