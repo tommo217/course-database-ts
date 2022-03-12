@@ -86,6 +86,19 @@ function listStoredDatasets() {
 }
 
 /**
+ * Cache for datasets
+ */
+interface RoomsCache {
+	[idString: string]: any[];
+}
+interface CoursesCache {
+	[idString: string]: Section[];
+}
+
+let roomsCache: RoomsCache = {};
+let coursesCache: CoursesCache = {};
+
+/**
  * This is the main programmatic entry point for the project.
  * Method documentation is in IInsightFacade
  *
@@ -98,6 +111,7 @@ export default class InsightFacade implements IInsightFacade {
 		if (!fs.existsSync(metaDir)) {
 			fs.mkdirSync(metaDir);
 		}
+
 		console.log("InsightFacadeImpl::init()");
 	}
 
@@ -130,7 +144,7 @@ export default class InsightFacade implements IInsightFacade {
 					courseString = file.async("string");
 					courseData.push(courseString);
 				});
-				Promise.all(courseData).then((array)=>{
+				Promise.all(courseData).then((array) => {
 					parseInfo(array, id, kind).then((res) => {
 						return resolve(res);
 					});
@@ -247,7 +261,10 @@ function queryForResult(q: Query): InsightResult[]{
  */
 function sliceIntoObjects(content: string): string[] {
 	let secStrings: string[] = [];
-	while(content.indexOf("{") > -1) {
+	if (content.indexOf("[") > 0) {
+		content = content.slice(content.indexOf("["));
+	}
+	while (content.indexOf("{") > -1) {
 		const objStart = content.indexOf("{");
 		const objEnd = content.indexOf("}");
 		if (objStart < objEnd) {
@@ -272,7 +289,8 @@ function processSection(secStr: string, query: Query, results: InsightResult[]) 
 			results.push(res);
 		}
 	} catch (err) {
-		console.warn("Invalid entry in database: " + secStr);
+		console.warn("Error in reading section data: " + secStr);
+		console.log(err);
 	}
 }
 
