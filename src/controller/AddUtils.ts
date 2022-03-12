@@ -1,9 +1,6 @@
 import {InsightDatasetKind, InsightError} from "./IInsightFacade";
 import * as fs from "fs-extra";
 import {Section} from "./Section";
-import {CoursesCache}  from"./CoursesCache";
-import {RoomsCache} from "./RoomCache";
-
 
 let numRows: number;
 let dataDir = "./data/";
@@ -40,36 +37,22 @@ export class AddUtils {
 		}
 	}
 
-	public parseCourse(Arr: string[], ID: string, storedIDs: string[], sectionData: Section[]): boolean {
-		for (const element of Arr) { // element is the text string of the course file.
+	public parseCourse(array: string[], ID: string, storedIDs: string[], sectionData: Section[]): number{
+		for (const element of array) { // element is the text string of the course file.
 			let course: any;
 			try{
 				course = JSON.parse(element);// course is the content in each course file
 			} catch (e) {
 				console.log(e);
-				return false; // Error in parse course file.
 			}
 			let sectionsArr = course["result"];// an array holding all the sections in this course
 			if(sectionsArr.length > 0) {// has section data in this course file
 				// check all sections, extract query keys and put into Section object, skip invalid sections
 				this.createSectionObjects(sectionsArr, sectionData);
 			}
+				// return sectionData.length;
 		}
-		numRows = sectionData.length;
-		if(numRows === 0) {
-			// zero valid sections found in all course files, return InsightError.
-			return false;
-		} else {
-			// let kind = InsightDatasetKind.Courses;
-			// save to disk TODO: move to writeTODisc function
-			//
-			// write to cache
-			// write to disc
-			// this.writeToDisc(ID, datasetObj, metaData);
-
-			// storedIDs = listStoredDatasets();
-			return true;
-		}
+		return sectionData.length;
 	}
 
 	public async writeToDisc(datasetID: string, kind: InsightDatasetKind, numRow: number,  sectionData: Section[]) {
@@ -79,7 +62,8 @@ export class AddUtils {
 			await fs.outputFile((dataDir + datasetID), datasetObj);
 			await fs.outputFile((metaDir + datasetID + "_meta"), metaData);
 		} catch (e) {
-			return Promise.reject(new InsightError("Write to disk error"));
+			// return Promise.reject(new InsightError("Write to disk error"));
+			console.log(e);
 		}
 	}
 }

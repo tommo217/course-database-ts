@@ -20,7 +20,7 @@ let sectionData: Section[] = [];// array of the valid section objects
 let numRows: number = 0;
 let storedIDs: string[] = [];// array of all the stored dataset IDs
 export const dataDir = "./data/";
-export const courseDir = "./courses";
+export const courseDir = "./courses/";
 export const roomDir = "./rooms";
 const metaDir = "./data/meta/";
 
@@ -99,29 +99,26 @@ export default class InsightFacade implements IInsightFacade {
 			// load zip, check zip validity
 			zip.loadAsync(content, {base64: true}).then(function(ZipObj: any) {
 				if(kind === InsightDatasetKind.Courses) {
-					fs.access(courseDir, function(err){
-						if(err) {
-							return reject(new InsightError("No courses folder."));
+					if(zip.folder(/courses/).length <= 0){
+						return reject(new InsightError("No courses folder."));
+					}
+					// open courses folder and parse info
+					ZipObj.folder("courses")?.forEach((relativePath: string, file: any) => {
+						courseString = file.async("string");
+						courseData.push(courseString);
+					});
+					Promise.all(courseData).then((array)=> {
+						numRows = utils.parseCourse(array, id, storedIDs, sectionData);
+						if(numRows > 0) {
+							// store in cache
+							coursesCache[id] = sectionData;
+							// write to disc
+							// numRows = sectionData.length;
+							utils.writeToDisc(id, kind, numRows, sectionData);
+							// resolve with list of stored datasets
+							return resolve(Object.keys(coursesCache));
 						} else {
-							// open courses folder and parse info
-							ZipObj.folder("courses")?.forEach(async (relativePath: string, file: any) => {
-								courseString = file.async("string");
-								courseData.push(courseString);
-							});
-							Promise.all(courseData).then((array)=>{
-								let parseSuccess = utils.parseCourse(array, id, storedIDs, sectionData);
-								if(parseSuccess) {
-									// store in cache
-									coursesCache[id] = sectionData;
-									// write to disc
-									numRows = sectionData.length;
-									utils.writeToDisc(id, kind, numRows, sectionData);
-									// resolve with list of stored datasets
-									return resolve;
-								} else {
-									return reject(new InsightError("No valid sections."));
-								}
-							});
+							return reject(new InsightError("No valid sections."));
 						}
 					});
 				} else if (kind === InsightDatasetKind.Rooms) {
@@ -130,6 +127,7 @@ export default class InsightFacade implements IInsightFacade {
 							return reject(new InsightError("No courses folder."));
 						}
 					});
+					// C2 implementation
 				} else {
 					return Promise.reject("Unknown dataset kind.");
 				}
