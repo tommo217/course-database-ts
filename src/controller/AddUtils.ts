@@ -1,15 +1,15 @@
 import {InsightDatasetKind, InsightError} from "./IInsightFacade";
 import * as fs from "fs-extra";
 import {Section} from "./Section";
-
-let numRows: number;
-let dataDir = "./data/";
-let metaDir = "./meta/";
+import {dataDir, metaDir} from "./InsightFacade";
+// let numRows: number;
+// let dataDir = "./data/";
+// let metaDir = "./meta/";
 // let storedIDs: string[] = [];// array of all the stored dataset IDs
 
 export class AddUtils {
 	constructor() {
-		numRows = 0;
+		let numRows = 0;
 	}
 
 	public createSectionObjects(sectionArr: any, sectionData: Section[]) {

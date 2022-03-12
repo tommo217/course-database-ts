@@ -22,7 +22,7 @@ let storedIDs: string[] = [];// array of all the stored dataset IDs
 export const dataDir = "./data/";
 export const courseDir = "./courses/";
 export const roomDir = "./rooms";
-const metaDir = "./data/meta/";
+export const metaDir = "./data/meta/";
 
 interface CoursesCache {
 	[idString: string]: Section[];
@@ -114,7 +114,7 @@ export default class InsightFacade implements IInsightFacade {
 							coursesCache[id] = sectionData;
 							// write to disc
 							// numRows = sectionData.length;
-							utils.writeToDisc(id, kind, numRows, sectionData);
+							utils.writeToDisc(id, kind, numRows, sectionData).then();
 							// resolve with list of stored datasets
 							return resolve(Object.keys(coursesCache));
 						} else {
@@ -194,9 +194,9 @@ export default class InsightFacade implements IInsightFacade {
 					} catch (e) {
 						return reject(new InsightError("Error in reading stored metadata: " + metaDir + file));
 					}
-					let dataID = datasetMeta["dataID"];
-					let dataKind = datasetMeta["dataKind"];
-					let dataNumRows = datasetMeta["numRows"];
+					let dataID = datasetMeta["datasetID"];
+					let dataKind = datasetMeta["kind"];
+					let dataNumRows = datasetMeta["numRow"];
 					// a struct to store InsightDataset obj
 					let datasetObj: any = {
 						id: dataID,

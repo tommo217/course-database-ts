@@ -70,7 +70,7 @@ describe("InsightFacade", function () {
 
 		it("should list 1 dataset correctly (async)", async function (){
 			const content: string = datasetContents.get("courses") ?? "";
-			await insightFacade.addDataset("courses", content, InsightDatasetKind.Courses);
+			// await insightFacade.addDataset("courses", content, InsightDatasetKind.Courses);
 			const insightDataset = await insightFacade.listDatasets();
 			// should be exactly this
 			expect(insightDataset).to.deep.equal([{
