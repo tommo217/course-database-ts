@@ -13,15 +13,19 @@ export class Options {
 	public columns: string[]; // name of attributes, without database name
 	public orderKeys: string[]; // name of attribute to order by, without database name
 	public direction: string;
+	private haveTransform: boolean; // flag for if parent query has transform field
 
 	constructor() {
 		this.idString = "";
 		this.columns = [];
 		this.orderKeys = [];
 		this.direction = directions[0];
+		this.haveTransform = false;
 	}
 
-	public deserialize(input: any) {
+	public deserialize(input: any, haveTransform: boolean) {
+		this.haveTransform = haveTransform;
+
 		if (input.COLUMNS !== undefined) {
 			for (let i in input.COLUMNS) {
 				let field = this.verifyAndReadKey(input.COLUMNS[i], mFields.concat(sFields));
@@ -55,8 +59,15 @@ export class Options {
 		}
 	}
 
-	// Given an acceptable range of fields, verify key for semantic error & return field
+	/**
+	 * Given an acceptable range of fields, verify column key for semantic error & return field contained in key
+	 */
 	private verifyAndReadKey(key: string, acceptedFields: string[]): string {
+		// parse as ANYKEY
+		if (this.haveTransform && !key.includes("_")) {
+			return key;
+		}
+
 		let [idStr, field] = parseKey(key, acceptedFields); // accepts both sfield and mfield
 
 		if (this.idString === "") {
