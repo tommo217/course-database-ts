@@ -291,9 +291,9 @@ describe("InsightFacade", function () {
 		// This is a unit test. You should create more like this!
 		it("Should add a valid room dataset", function () {
 			const id: string = "rooms";
-			const content: string = datasetContents.get("courses") ?? "";
+			const content: string = datasetContents.get("rooms") ?? "";
 			const expected: string[] = [id];
-			return insightFacade.addDataset(id, content, InsightDatasetKind.Courses).then((result: string[]) => {
+			return insightFacade.addDataset(id, content, InsightDatasetKind.Rooms).then((result: string[]) => {
 				expect(result).to.deep.equal(expected);
 			});
 		});
