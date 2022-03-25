@@ -22,6 +22,7 @@ describe("InsightFacade", function () {
 	// Add future datasets here
 	const datasetsToLoad: {[key: string]: string} = {
 		courses: "./test/resources/archives/courses.zip",
+		rooms: "./test/resources/archives/rooms.zip"
 	};
 
 	// Load datasets
@@ -243,6 +244,88 @@ describe("InsightFacade", function () {
 			} catch (err) {
 				expect(err).to.be.instanceof(InsightError);
 			}
+		});
+	});
+
+	describe("Room Dataset Support", function () {
+		before(function () {
+			console.info(`Before: ${this.test?.parent?.title}`);
+		});
+
+		beforeEach(function () {
+			// Resets the insightFacade instance
+			// Runs before each test
+			console.info(`BeforeTest: ${this.currentTest?.title}`);
+			insightFacade = new InsightFacade();
+		});
+
+		after(function () {
+			console.info(`After: ${this.test?.parent?.title}`);
+		});
+
+		afterEach(function () {
+			// Resets the data directory (removing any cached data)
+			// Makes each test independent
+			console.info(`AfterTest: ${this.currentTest?.title}`);
+			fs.removeSync(persistDir);
+		});
+
+		/**
+		 * List Room Dataset
+		 */
+		it("should list 1 room dataset correctly", async function (){
+			const content: string = datasetContents.get("rooms") ?? "";
+			await insightFacade.addDataset("rooms", content, InsightDatasetKind.Rooms);
+			const insightDataset = await insightFacade.listDatasets();
+			// should be exactly this
+			expect(insightDataset).to.deep.equal([{
+				id: "rooms",
+				kind: InsightDatasetKind.Rooms,
+				numRows: 64612, // TODO: change num rows
+			}]);
+		});
+
+		/**
+		 * Add Room Dataset
+		 */
+		// This is a unit test. You should create more like this!
+		it("Should add a valid room dataset", function () {
+			const id: string = "rooms";
+			const content: string = datasetContents.get("courses") ?? "";
+			const expected: string[] = [id];
+			return insightFacade.addDataset(id, content, InsightDatasetKind.Courses).then((result: string[]) => {
+				expect(result).to.deep.equal(expected);
+			});
+		});
+
+		it("should fulfill with 1 correct dataset ID", function (){
+			const content: string = datasetContents.get("rooms") ?? "";
+			insightFacade.addDataset("rooms", content, InsightDatasetKind.Rooms).then((result: string[]) => {
+				expect(result).to.deep.equal(["rooms"]);
+			});
+		});
+
+
+		/**
+		 * Remove Room Dataset (copied from Tom's suite)
+		 */
+		it("should fulfill on successful removal", async function () {
+			const content: string = datasetContents.get("rooms") ?? "";
+			await insightFacade.addDataset("rooms", content, InsightDatasetKind.Rooms);
+			insightFacade.removeDataset("rooms")
+				.catch((err) => {
+					expect.fail();
+				});
+		});
+
+		it("should fulfill with the id of the removed dataset", async function () {
+			const content: string = datasetContents.get("rooms") ?? "";
+			await insightFacade.addDataset("rooms", content, InsightDatasetKind.Rooms);
+			await insightFacade.addDataset("rooms-2", content, InsightDatasetKind.Rooms);
+			await insightFacade.addDataset("rooms-3", content, InsightDatasetKind.Rooms);
+
+			const result = await insightFacade.removeDataset("rooms-2");
+			expect(result).to.equal("rooms-2");
 		});
 	});
 
