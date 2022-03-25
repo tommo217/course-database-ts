@@ -28,21 +28,3 @@ export class Section{
 		this.uuid = uuid;
 	}
 }
-
-// export function createSectionFromJson(sect: any): Section | undefined {
-// 	let avg: number = sect["Avg"];
-// 	let pass: number = sect["Pass"];
-// 	let fail: number = sect["Fail"];
-// 	let audit: number = sect["Audit"];
-// 	let year: number = sect["Section"] === "overall" ? 1900 : Number(sect["Year"]);
-// 	let dept: string = sect["Subject"];
-// 	let cId: string = sect["Course"]; // course ID
-// 	let prof: string = sect["Professor"];// this is instructor in Section obj
-// 	let title: string = sect["Title"];
-// 	let uid: string = String(sect["id"]);// this is uuid in Section obj
-// 	if(avg === undefined || pass === undefined || fail === undefined || audit === undefined || year === undefined ||
-// 			dept === undefined || cId === undefined || prof === undefined || title === undefined || uid === undefined) {
-// 		return undefined;
-// 	}
-// 	return new Section(avg, pass, fail, audit, year,dept, cId, prof, title, uid);
-// }

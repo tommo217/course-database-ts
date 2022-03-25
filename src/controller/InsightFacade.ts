@@ -234,6 +234,13 @@ function queryForResult(q: Query): InsightResult[]{
 		processSection(secStr, q, results);
 	});
 
+	if (q.transformations !== undefined) {
+		results = q.transformations.transformResults(results);
+		results.map((res) => {
+			return q.options.filterColumns(res);
+		});
+	}
+
 	// TODO optimise
 	if (results.length > resultLimit) {
 		throw new ResultTooLargeError("query result exceeds " + resultLimit);
@@ -272,8 +279,14 @@ function processSection(secStr: string, query: Query, results: InsightResult[]) 
 	try {
 		const sec: Section = JSON.parse(secStr);
 		if (query.body.evaluateEntry(sec)) {
-			let res = query.options.transformSections(sec);
-			results.push(res);
+			if (!query.options.haveTransform) {
+				// simple re-cast of columns
+				let res = query.options.transformToResult(sec);
+				res = query.options.filterColumns(res);
+				results.push(res);
+			} else {
+				results.push(sec as InsightResult);
+			}
 		}
 	} catch (err) {
 		console.warn("Error in reading section data: " + secStr);

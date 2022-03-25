@@ -6,6 +6,7 @@ import {Options} from "./Options";
 import {Transformations} from "./Transformations";
 import * as fs from "fs";
 import {dataDir} from "../controller/InsightFacade";
+import {InsightResult} from "../controller/IInsightFacade";
 
 interface Query {
 	body: Filter;
@@ -44,7 +45,10 @@ function parseQuery(input: any): Query{
 // TODO: change to verify cache?
 function verifyIdString(q: Query) {
 	if (q.body.idString !== q.options.idString) {
-		throw new Error("Semantic error: multiple dbs referenced");
+		throw new Error("WHERE and OPTIONS referencing different idstrings");
+	}
+	if (q.transformations !== undefined && q.transformations.idString !== q.body.idString) {
+		throw new Error("WHERE and TRANSFORMATIONS referencing different idstrings");
 	}
 	if (!fs.existsSync(dataDir + q.body.idString)) {
 		throw new Error("Semantic error: dataset file does not exist");
@@ -57,14 +61,6 @@ function verifyIdString(q: Query) {
  * @param fields - accepted range of fields; if null, skip check
  */
 function parseKey(key: string, fields: string[] | null): [string,string] {
-	// let fields: string[];
-	// if (keyType === 0) {
-	// 	fields = mFields;
-	// } else if (keyType === 1){
-	// 	fields = sFields;
-	// } else {
-	// 	fields = mFields.concat(sFields);
-	// }
 	let keys = key.split("_");
 	if (keys.length === 2) {
 		if (fields === null) {
@@ -77,15 +73,16 @@ function parseKey(key: string, fields: string[] | null): [string,string] {
 }
 
 /**
- * Check that if a GROUP is present,
+ * Assuming that Transformations exists, check that
  * all COLUMNS terms must exist in Transformations.
  */
 function verifyColumns(q: Query) {
-	for (let col in q.options.columns) {
+	q.options.columns.forEach( (col) => {
 		if (!q.transformations?.hasCol(col)) {
 			throw new Error("Keys in COLUMNS must be in GROUP or APPLY when TRANSFORMATIONS is present");
 		}
-	}
+	});
 }
+
 
 export {Query, parseQuery, parseKey};
