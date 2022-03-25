@@ -7,6 +7,7 @@ import {
 	ResultTooLargeError
 } from "./IInsightFacade";
 import {Section} from "./Section";
+import {Room} from "./Room";
 import {parseQuery, Query} from "../model/Query";
 import * as fs from "fs-extra";
 import JSZip from "jszip";
@@ -23,6 +24,13 @@ export const dataDir = "./data/";
 export const courseDir = "./courses/";
 export const roomDir = "./rooms";
 export const metaDir = "./data/meta/";
+const parse5 = require("parse5");
+
+// room related data
+let table: any[] = [];
+let buildingList: any[] = []; // list of building objects
+let roomData: Room[] = [];
+const tableName: string = "views-table cols-5 table";
 
 /**
  * Cache for datasets
@@ -33,37 +41,10 @@ interface CoursesCache {
 let coursesCache: CoursesCache = {};
 
 interface RoomsCache {
-	[idString: string]: any[];
+	[idString: string]: Room[];
 }
 let roomsCache: RoomsCache = {};
 // coursesCache["course"] = sectionData;
-
-
-function createSectionObjects(sectionArr: any) {
-	for(const sect of sectionArr) {
-		let avg: number = sect["Avg"];
-		let pass: number = sect["Pass"];
-		let fail: number = sect["Fail"];
-		let audit: number = sect["Audit"];
-		let year: number = sect["Section"] === "overall" ? 1900 : Number(sect["Year"]);
-		let dept: string = sect["Subject"];
-		let cId: string = sect["Course"]; // course ID
-		let prof: string = sect["Professor"];// this is instructor in Section obj
-		let title: string = sect["Title"];
-		let uid: string = String(sect["id"]);// this is uuid in Section obj
-		if(avg === undefined || pass === undefined || fail === undefined || audit === undefined || year === undefined ||
-			dept === undefined || cId === undefined || prof === undefined || title === undefined || uid === undefined) {
-			continue;
-		}
-		let thisSection: Section =
-			new Section(avg, pass, fail, audit, year,dept, cId, prof, title, uid);
-		sectionData.push(thisSection);
-	}
-}
-
-// async function parseInfo(dataArr: string[], dataID: string, dataKind: InsightDatasetKind): Promise<string[]> {
-//
-// }
 
 function listStoredDatasets() {
 	const dirents = fs.readdirSync(dataDir, {withFileTypes: true});
@@ -71,6 +52,15 @@ function listStoredDatasets() {
 		.filter((entry) => entry.isFile())
 		.map((entry) => entry.name);
 	return storedIDs;
+}
+
+function  checkId(id: string) {
+	if(id === " ") {
+		return Promise.reject(new InsightError("Empty id"));
+	}
+	if (listStoredDatasets().includes(id)) {
+		return Promise.reject(new InsightError("dataset already exists"));
+	}
 }
 
 /**
@@ -93,11 +83,9 @@ export default class InsightFacade implements IInsightFacade {
 	public addDataset(id: string, content: string, kind: InsightDatasetKind): Promise<string[]> {
 		sectionData = [];
 		courseData = [];
-		if(id === " ") {
-			return Promise.reject(new InsightError("Empty id"));
-		}
-		if (listStoredDatasets().includes(id)) {
-			return Promise.reject(new InsightError("dataset already exists"));
+		roomData = [];
+		if(id === " " || listStoredDatasets().includes(id)) {
+			return Promise.reject(new InsightError("Invalid id"));
 		}
 		return new Promise(function (resolve, reject) {
 			// load zip, check zip validity
@@ -126,16 +114,24 @@ export default class InsightFacade implements IInsightFacade {
 						}
 					});
 				} else if (kind === InsightDatasetKind.Rooms) {
-					fs.access(roomDir, function(err){
-						if(err) {
-							return reject(new InsightError("No courses folder."));
+					if(zip.folder(/rooms/).length <= 0){
+						return reject(new InsightError("No rooms folder."));
+					}
+					// C2 implementation
+					ZipObj.files("index.htm").async("string").then(async (indexString: string) => {
+						buildingList = await utils.getBuilding(indexString);
+						numRows = utils.parseRoom(ZipObj, buildingList, roomData);
+						if(numRows > 0) {
+							roomsCache[id] = roomData;
+							utils.writeToDisc(id, kind, numRows, roomData);
+							return resolve(Object.keys(roomData));
+						} else {
+							return reject(new InsightError("No valid room."));
 						}
 					});
-					// C2 implementation
 				} else {
 					return Promise.reject("Unknown dataset kind.");
 				}
-
 			}).catch( ()=> {
 				return reject(new InsightError("Not valid zip"));
 			});
