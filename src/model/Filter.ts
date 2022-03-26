@@ -231,6 +231,7 @@ class SComparison implements Filter{
 		return this.compareStr(entryDic[this.sfield] as string);
 	}
 
+	// TODO: add test for this
 	private compareStr(str: string): boolean {
 		const matchPattern = RegExp("^"
 			+ this.inputStr.replaceAll("*", ".*")

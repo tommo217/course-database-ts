@@ -1,0 +1,25 @@
+{
+	"title": "C2: should reject order not in columns",
+	"input": {
+		"WHERE": {
+			"GT": {
+				"courses_avg": 97
+			}
+		},
+		"OPTIONS": {
+			"COLUMNS": [
+				"courses_dept",
+				"courses_avg"
+			],
+			"ORDER": {
+				"dir": "DOWN",
+				"keys": [
+					"courses_avg",
+					"courses_id"
+				]
+			}
+		}
+	},
+	"errorExpected": true,
+	"expected": "InsightError"
+}
