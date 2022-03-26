@@ -118,7 +118,9 @@ export default class InsightFacade implements IInsightFacade {
 						return reject(new InsightError("No rooms folder."));
 					}
 					// C2 implementation
-					ZipObj.files("index.htm").async("string").then(async (indexString: string) => {
+					// ZipObj.folder("rooms").file("index.htm")
+					// zip.file("index.htm")
+					ZipObj.folder("rooms").file("index.htm").async("string").then(async (indexString: string) => {
 						buildingList = await utils.getBuilding(indexString);
 						numRows = utils.parseRoom(ZipObj, buildingList, roomData);
 						if(numRows > 0) {
@@ -132,8 +134,8 @@ export default class InsightFacade implements IInsightFacade {
 				} else {
 					return Promise.reject("Unknown dataset kind.");
 				}
-			}).catch( ()=> {
-				return reject(new InsightError("Not valid zip"));
+			}).catch( (err)=> {
+				return reject(new InsightError(err));
 			});
 		});
 	}

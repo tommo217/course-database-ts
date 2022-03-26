@@ -7,18 +7,19 @@ import {Building} from "./Building";
 import {Room} from "./Room";
 import {JSZipObject} from "jszip";
 import {rejects} from "assert";
+import undefinedError = Mocha.utils.undefinedError;
 // let numRows: number;
 // let dataDir = "./data/";
 // let metaDir = "./meta/";
 // let storedIDs: string[] = [];// array of all the stored dataset IDs
-let buildingTr: any[];
+let trList: any[];
 let roomTr: any[];
 const http = require("http");
 
 export class AddUtils {
 	constructor() {
 		let numRows = 0;
-		buildingTr = [];
+		trList = [];
 		roomTr = [];
 	}
 
@@ -87,52 +88,69 @@ export class AddUtils {
 
 	public searchElement(elementType: string, attrs_name: string, attrs_value: string, node: any, container: any[]){
 		// elementType:tag
-		// table attrs_name = "class"
-		// tbody attrs_name = []
-		// td attrs_name = "class"
-		// anchor attrs_name = href
+		// table: attrs_name = "class"
+		// td: attrs_name = "class"
+		// tr: attrs_name = "class"
+		// a: attrs_name = href
+		// tbody: attrs_name = []
 		if (node === undefined) {
 			return;
 		}
 		if (node.nodeName === elementType && node.tagName === elementType) {// check tag
-			// check specification
-			if(node.attrs.name === attrs_name) {
-				if (attrs_name === "href") {
+			if (attrs_value === "tr") {
+				container.push(node);
+			} else if(node.attrs.name === attrs_name) {// check specification
+				if (attrs_name === "href") { // search for anchor
 					// push href value to list
 					container.push(node.attrs.value);
 					return;
-				} else if (attrs_value === "tr") {
-					if (node.attrs.value === "odd views-row-first" || node.attrs.value === "even"
-						|| node.attrs.value === "odd") { // check tr's attrs value
-						// push tr to list
-						container.push(node);
-						return;
-					}
+				} else if (node.attrs.value === attrs_value) { // search for td
+					container.push(node);
 				}
-				// } else if(node.attrs.value === attrs_value) {
+				// else if (elementType === "tr"){ // search for tr
 				// 	container.push(node);
-				// 	return;
 				// }
 			}
 		}
-		// TODO: verify logic, make sure recursion working, do not change if statement logic
-		let count = node.childNodes.length;
-		for (let i = 0; i < count - 1; i++) {
-			this.searchElement(elementType, attrs_name, attrs_value, node.childNodes[i], container);
+
+		if (node.childNodes !== undefined) {
+			for (let child of node.childNodes) {
+				this.searchElement(elementType, attrs_name, attrs_value, child, container);
+			}
 		}
-		this.searchElement(elementType, attrs_name, attrs_value, node.childNodes[count - 1], container);
+	}
+
+	public searchTbody(node: any, container: any[]){
+		if (node === undefined) {
+			return;
+		}
+		if (node.nodeName === "tbody" && node.tagName === "tbody") {// check tag
+			container.push(node);
+		}
+		if (node.childNodes !== undefined) {
+			for (let child of node.childNodes) {
+				this.searchTbody(child, container);
+			}
+		}
+	}
+
+	public getTbody(indexDocument: any) {
+		let tbodyArr: any[] = [];
+		this.searchTbody(indexDocument, tbodyArr);
+		let tb = tbodyArr[0];
+		this.searchElement("tr", "class", "tr", tb, trList);
 	}
 
 	public getBuilding(indexString: string): Promise <any[]> {
 		const indexDocument = parse5.parse(indexString);
-		// this.getBuildingsHref(indexDocument, trList);
-		this.searchElement("tr", "class", "tr", indexDocument, buildingTr);
-		if(buildingTr.length === 0) {
+		this.getTbody(indexDocument);
+		// this.searchElement("tr", "class", "tr", indexDocument, trList);
+		if(trList.length === 0) {
 			return Promise.reject(new InsightError("No building"));
 		}
 		let buildingList: Building[] = []; // array of building objects
 		// get building shorname, fullname, address, href from tr
-		for (let tr of buildingTr) {
+		for (let tr of trList) {
 			let codeArr: any[] = [];// building code container, has to be an array to be passed in search function
 			let code: string = ""; // building short name
 			this.searchElement("td", "class", "views-field views-field-field-building-code", tr, codeArr);
@@ -144,7 +162,6 @@ export class AddUtils {
 			let fullName: string = "";
 			this.searchElement("td", "class", "views-field views-field-title", tr, fullNameArr);
 			if(fullNameArr.length > 0) {
-				// TODO: not sure
 				fullName = fullNameArr[0].childNodes[0].childNodes[1].childNodes[0].value.trim();
 			}
 
@@ -238,7 +255,6 @@ export class AddUtils {
 	}
 
 	public parseRoom(ZipObj: any, buildingList: any[], roomData: Room[]) {
-		// verify roomCahe is not empty
 		for (let building of buildingList) {
 			roomTr = [];
 			ZipObj.files(building._href).async("string").then((roomString: string)=>{
