@@ -117,4 +117,3 @@ export class Room {
 	public set rooms_href(value: string) {
 		this._rooms_href = value;
 	}
-}
