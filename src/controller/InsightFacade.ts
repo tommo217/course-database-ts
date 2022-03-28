@@ -54,14 +54,18 @@ function listStoredDatasets() {
 	return storedIDs;
 }
 
-function  checkId(id: string) {
-	if(id === " ") {
-		return Promise.reject(new InsightError("Empty id"));
-	}
-	if (listStoredDatasets().includes(id)) {
-		return Promise.reject(new InsightError("dataset already exists"));
-	}
+function cacheContainID(id: string): boolean {
+	return false;
 }
+
+// function  checkId(id: string) {
+// 	if(id === " ") {
+// 		return Promise.reject(new InsightError("Empty id"));
+// 	}
+// 	if (listStoredDatasets().includes(id)) {
+// 		return Promise.reject(new InsightError("dataset already exists"));
+// 	}
+// }
 
 /**
  * This is the main programmatic entry point for the project.
@@ -118,10 +122,9 @@ export default class InsightFacade implements IInsightFacade {
 						return reject(new InsightError("No rooms folder."));
 					}
 					// C2 implementation
-					// ZipObj.folder("rooms").file("index.htm")
 					// zip.file("index.htm")
 					ZipObj.folder("rooms").file("index.htm").async("string").then(async (indexString: string) => {
-						buildingList = await utils.getBuilding(indexString);
+						buildingList = utils.getBuilding(indexString);
 						numRows = utils.parseRoom(ZipObj, buildingList, roomData);
 						if(numRows > 0) {
 							roomsCache[id] = roomData;

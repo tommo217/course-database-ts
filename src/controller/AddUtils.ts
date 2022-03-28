@@ -86,36 +86,34 @@ export class AddUtils {
 		}
 	}
 
-	public searchElement(elementType: string, attrs_name: string, attrs_value: string, node: any, container: any[]){
-		// elementType:tag
-		// table: attrs_name = "class"
+	public searchElement(tag: string, attrs_name: string, attrs_value: string, node: any, container: any[]){
 		// td: attrs_name = "class"
 		// tr: attrs_name = "class"
-		// a: attrs_name = href
-		// tbody: attrs_name = []
+		// a: attrs_name = "href"
 		if (node === undefined) {
 			return;
 		}
-		if (node.nodeName === elementType && node.tagName === elementType) {// check tag
-			if (attrs_value === "tr") {
-				container.push(node);
-			} else if(node.attrs.name === attrs_name) {// check specification
-				if (attrs_name === "href") { // search for anchor
-					// push href value to list
-					container.push(node.attrs.value);
-					return;
-				} else if (node.attrs.value === attrs_value) { // search for td
-					container.push(node);
+		if (node.nodeName === tag && node.tagName === tag) {// check tag
+			// check specification
+			for (let obj of node.attrs) {
+				if (obj.name === attrs_name) {
+					if (attrs_name === "href") { // find href from anchor
+						container.push(obj.value);
+					} else { // attrs_name = class
+						if (obj.value === attrs_value) { // td
+							container.push(node);
+						} else if (tag === "tr") {
+							// add tr
+							container.push(node);
+						}
+					}
 				}
-				// else if (elementType === "tr"){ // search for tr
-				// 	container.push(node);
-				// }
 			}
 		}
 
 		if (node.childNodes !== undefined) {
 			for (let child of node.childNodes) {
-				this.searchElement(elementType, attrs_name, attrs_value, child, container);
+				this.searchElement(tag, attrs_name, attrs_value, child, container);
 			}
 		}
 	}
@@ -138,74 +136,78 @@ export class AddUtils {
 		let tbodyArr: any[] = [];
 		this.searchTbody(indexDocument, tbodyArr);
 		let tb = tbodyArr[0];
-		this.searchElement("tr", "class", "tr", tb, trList);
+		this.searchElement("tr", "class", "", tb, trList);
 	}
 
-	public getBuilding(indexString: string): Promise <any[]> {
+	public getBuilding(indexString: string): any[] {
 		const indexDocument = parse5.parse(indexString);
-		this.getTbody(indexDocument);
-		// this.searchElement("tr", "class", "tr", indexDocument, trList);
-		if(trList.length === 0) {
-			return Promise.reject(new InsightError("No building"));
-		}
+		// this.getTbody(indexDocument);
+		this.searchElement("tr", "class", "", indexDocument, trList);
 		let buildingList: Building[] = []; // array of building objects
-		// get building shorname, fullname, address, href from tr
-		for (let tr of trList) {
-			let codeArr: any[] = [];// building code container, has to be an array to be passed in search function
-			let code: string = ""; // building short name
-			this.searchElement("td", "class", "views-field views-field-field-building-code", tr, codeArr);
-			if (codeArr.length > 0) {
-				code = codeArr[0].childNodes[0].value.trim();
-			}
+		if(trList.length >= 0) {
+			// get building shorname, fullname, address, href from tr
+			for (let tr of trList) {
+				let codeArr: any[] = [];// building code container, has to be an array to be passed in search function
+				let code: string = ""; // building short name
+				this.searchElement("td", "class", "views-field views-field-field-building-code", tr, codeArr);
+				if (codeArr.length > 0) {
+					code = codeArr[0].childNodes[0].value.trim();
+				} // got code
 
-			let fullNameArr: any[] = [];
-			let fullName: string = "";
-			this.searchElement("td", "class", "views-field views-field-title", tr, fullNameArr);
-			if(fullNameArr.length > 0) {
-				fullName = fullNameArr[0].childNodes[0].childNodes[1].childNodes[0].value.trim();
-			}
+				let fullNameArr: any[] = [];
+				let fullName: string = "";
+				this.searchElement("td", "class", "views-field views-field-title", tr, fullNameArr);
+				if(fullNameArr.length > 0) {
+					fullName = fullNameArr[0].childNodes[1].childNodes[0].value.trim();
+				}
 
-			let addressArr: any[] = [];
-			let address: string = "";
-			let addressURL: string = "";
-			this.searchElement("td", "class", "views-field views-field-field-building-address", tr, addressArr);
-			if (addressArr.length > 0) {
-				address = addressArr[0].childNodes[0].value.trim();
-				addressURL = encodeURIComponent(address);
-			}
+				let addressArr: any[] = [];
+				let address: string = "";
+				let addressURL: string = "";
+				this.searchElement("td", "class", "views-field views-field-field-building-address", tr, addressArr);
+				if (addressArr.length > 0) {
+					address = addressArr[0].childNodes[0].value.trim();
+					addressURL = encodeURIComponent(address);
+				}
 
-			let hrefArr: any[] = [];
-			let href: string = "";
-			this.searchElement("a", "href", "", tr, hrefArr);
-			if (hrefArr.length > 0) {
-				href = hrefArr[0];
-			}
+				let hrefArr: any[] = [];
+				let href: string = "";
+				// this.searchElement("a", "href", "", tr, hrefArr);
+				this.searchElement("td", "class", "views-field views-field-nothing", tr, hrefArr);
+				if (hrefArr.length > 0) {
+					href = hrefArr[0].childNodes[1].attrs[0].value.trim();
+				}
 
-			let latitude;
-			let longitude;
-			this.getGeolocation(addressURL).then((res: string) => {
-				let geoData = JSON.parse(res);
-				latitude = geoData.lat;
-				longitude = geoData.lon;
-				let building = new Building(fullName, code, address, href, latitude, longitude);
-				buildingList.push(building);
-			});
+				let latitude;
+				let longitude;
+				this.getGeolocation(addressURL).then((res: string) => {
+					let geoData = JSON.parse(res);
+					latitude = geoData.lat;
+					longitude = geoData.lon;
+					// building = new Building(fullName, code, address, href, latitude, longitude);
+					buildingList.push(new Building(fullName, code, address, href, latitude, longitude));
+					// let num = buildingList.length;
+				});
+				// buildingList.push(new Building(fullName, code, address, href));
+			}
 		}
-		return Promise.resolve(buildingList);
+		// let num = buildingList.length
+		return buildingList;
 	}
 
 	public getGeolocation(URL: string): Promise<string> {
 		return new Promise<string>((resolve, reject) => {
-			http.get("http://cs310.students.cs.ubc.ca:11316/api/v1/project_team686/" + URL, (response: any) => {
-				let res = "";
-				response.on("data", (data: string) => {
-					res += data;
-				});
-				response.on("end", () => {
-					return resolve (res);
-				});
-			}).on("error", () => {
-				return reject("Error in http.get");
+			http.get("http://cs310.students.cs.ubc.ca:11316/api/v1/project_team686/" + URL,
+				(response: any) => {
+					let res = "";
+					response.on("data", (data: string) => {
+						res += data;
+					});
+					response.on("end", () => {
+						return resolve (res);
+					});
+				}).on("error", (err: Error) => {
+				return reject(err);
 			});
 		});
 	}
@@ -245,7 +247,7 @@ export class AddUtils {
 			let roomHref: string = "";
 			this.searchElement("td", "class", "views-field views-field-nothing", tr, roomHrefArr);
 			if(roomHrefArr.length > 0) {
-				roomHref = roomHrefArr[0].childNodes[0].childNodes[1].value.trim();
+				roomHref = roomHrefArr[0].childNodes[1].attrs[0].value.trim();
 			}
 			let roomName: string = building._shortName + "_" + roomNumber;
 			let room = new Room(building._fullName, building._shortName, roomNumber, roomName,
@@ -254,12 +256,12 @@ export class AddUtils {
 		}
 	}
 
-	public parseRoom(ZipObj: any, buildingList: any[], roomData: Room[]) {
+	public parseRoom(ZipObj: any, buildingList: any[], roomData: Room[]): number{
 		for (let building of buildingList) {
 			roomTr = [];
-			ZipObj.files(building._href).async("string").then((roomString: string)=>{
+			ZipObj.files(building._href).async("string").then((roomString: string)=>{ // TODO: might be ZipObj.file
 				const roomDocument = parse5.parse(roomString);
-				this.searchElement("tr", "class", "tr", roomDocument, roomTr);
+				this.searchElement("tr", "class", "", roomDocument, roomTr);
 				this.createRoomObj(roomTr, building, roomData);
 			});
 		}
