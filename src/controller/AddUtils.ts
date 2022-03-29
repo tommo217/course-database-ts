@@ -8,12 +8,14 @@ import {Room} from "./Room";
 import {JSZipObject} from "jszip";
 import {rejects} from "assert";
 import undefinedError = Mocha.utils.undefinedError;
+import {resolve} from "dns";
 // let numRows: number;
 // let dataDir = "./data/";
 // let metaDir = "./meta/";
 // let storedIDs: string[] = [];// array of all the stored dataset IDs
 let trList: any[];
 let roomTr: any[];
+let buildingList: Building[]; // list of building objects
 const http = require("http");
 
 export class AddUtils {
@@ -21,6 +23,7 @@ export class AddUtils {
 		let numRows = 0;
 		trList = [];
 		roomTr = [];
+		buildingList = [];
 	}
 
 	// public addRoomData(id: string, content: string, kind: InsightDatasetKind, indexString: string): Promise<any> {
@@ -139,11 +142,13 @@ export class AddUtils {
 		this.searchElement("tr", "class", "", tb, trList);
 	}
 
-	public getBuilding(indexString: string): any[] {
+	public getBuilding(indexString: string): Promise<Building[]> {
+		let tempList: Building[] = [];
 		const indexDocument = parse5.parse(indexString);
+		let promises: Array<Promise<any>> = [];
 		// this.getTbody(indexDocument);
 		this.searchElement("tr", "class", "", indexDocument, trList);
-		let buildingList: Building[] = []; // array of building objects
+		// let buildingList: Building[] = []; // array of building objects
 		if(trList.length >= 0) {
 			// get building shorname, fullname, address, href from tr
 			for (let tr of trList) {
@@ -152,7 +157,7 @@ export class AddUtils {
 				this.searchElement("td", "class", "views-field views-field-field-building-code", tr, codeArr);
 				if (codeArr.length > 0) {
 					code = codeArr[0].childNodes[0].value.trim();
-				} // got code
+				}
 
 				let fullNameArr: any[] = [];
 				let fullName: string = "";
@@ -163,11 +168,9 @@ export class AddUtils {
 
 				let addressArr: any[] = [];
 				let address: string = "";
-				let addressURL: string = "";
 				this.searchElement("td", "class", "views-field views-field-field-building-address", tr, addressArr);
 				if (addressArr.length > 0) {
 					address = addressArr[0].childNodes[0].value.trim();
-					addressURL = encodeURIComponent(address);
 				}
 
 				let hrefArr: any[] = [];
@@ -175,39 +178,41 @@ export class AddUtils {
 				// this.searchElement("a", "href", "", tr, hrefArr);
 				this.searchElement("td", "class", "views-field views-field-nothing", tr, hrefArr);
 				if (hrefArr.length > 0) {
-					href = hrefArr[0].childNodes[1].attrs[0].value.trim();
+					href = hrefArr[0].childNodes[1].attrs[0].value.trim().replace(".", "rooms");
+					// building.href.replace(".", "rooms");
 				}
-
-				let latitude;
-				let longitude;
-				this.getGeolocation(addressURL).then((res: string) => {
-					let geoData = JSON.parse(res);
-					latitude = geoData.lat;
-					longitude = geoData.lon;
-					// building = new Building(fullName, code, address, href, latitude, longitude);
-					buildingList.push(new Building(fullName, code, address, href, latitude, longitude));
-					// let num = buildingList.length;
-				});
-				// buildingList.push(new Building(fullName, code, address, href));
+				let building = new Building(fullName, code, address, href);
+				tempList.push(building);
+				promises.push(this.getGeolocation(building));
 			}
 		}
-		// let num = buildingList.length
-		return buildingList;
+		return Promise.all(promises).then(() => {
+			if (buildingList.length <= 0 ) {
+				return Promise.reject("No building");
+			}
+			return Promise.resolve(buildingList);
+		});
+		// throw new Error();
 	}
 
-	public getGeolocation(URL: string): Promise<string> {
-		return new Promise<string>((resolve, reject) => {
-			http.get("http://cs310.students.cs.ubc.ca:11316/api/v1/project_team686/" + URL,
-				(response: any) => {
-					let res = "";
-					response.on("data", (data: string) => {
-						res += data;
-					});
-					response.on("end", () => {
-						return resolve (res);
-					});
-				}).on("error", (err: Error) => {
-				return reject(err);
+	public getGeolocation(building: Building): Promise<void> {
+		let URL = encodeURIComponent(building.address);
+		return new Promise<void>((resolved) => { // change resolve to something else
+			http.get("http://cs310.students.cs.ubc.ca:11316/api/v1/project_team686/" + URL, (response: any) => {
+				let res = "";
+				response.on("data", (data: string) => {
+					res += data;
+				});
+				response.on("end", () => {
+					let geoData = JSON.parse(res);
+					building.setLat(geoData.lat);
+					building.setLon(geoData.lon);
+					buildingList.push(building);
+					return resolved ();
+				});
+			}).on("error", (err: Error) => {
+				// skip this building, do nothing
+				return resolved ();
 			});
 		});
 	}
@@ -249,22 +254,30 @@ export class AddUtils {
 			if(roomHrefArr.length > 0) {
 				roomHref = roomHrefArr[0].childNodes[1].attrs[0].value.trim();
 			}
-			let roomName: string = building._shortName + "_" + roomNumber;
-			let room = new Room(building._fullName, building._shortName, roomNumber, roomName,
-				building._address, building._lat, building._lon, seatNumber, roomType, furnitureType, roomHref);
+			let roomName: string = building.shortName + "_" + roomNumber;
+			let latitude = building.getLat();
+			let longitude = building.getLon();
+			let room = new Room(building.fullName, building.shortName, roomNumber, roomName,
+				building.address, latitude, longitude, seatNumber, roomType, furnitureType, roomHref);
 			roomData.push(room);
 		}
 	}
 
-	public parseRoom(ZipObj: any, buildingList: any[], roomData: Room[]): number{
-		for (let building of buildingList) {
-			roomTr = [];
-			ZipObj.files(building._href).async("string").then((roomString: string)=>{ // TODO: might be ZipObj.file
-				const roomDocument = parse5.parse(roomString);
-				this.searchElement("tr", "class", "", roomDocument, roomTr);
-				this.createRoomObj(roomTr, building, roomData);
-			});
+	public loadRoom(zip: any, list: any[], roomData: Room[]){
+		let promises: Array<Promise<any>> = [];
+		for(let building of list) {
+			promises.push(this.parseRoom(zip, building, roomData));
 		}
-		return roomData.length;
+		return Promise.all(promises);
+	}
+
+	private parseRoom(zip: any, building: any, roomData: Room[]): Promise<void>{
+		return zip.file(building.href).async("string").then((roomString: string) => {
+			roomTr = [];
+			const roomDocument = parse5.parse(roomString);
+			this.searchElement("tr", "class", "", roomDocument, roomTr);
+			this.createRoomObj(roomTr, building, roomData);
+			return Promise.resolve();
+		});
 	}
 }

@@ -28,7 +28,7 @@ const parse5 = require("parse5");
 
 // room related data
 let table: any[] = [];
-let buildingList: any[] = []; // list of building objects
+// let buildingList: any[] = []; // list of building objects
 let roomData: Room[] = [];
 const tableName: string = "views-table cols-5 table";
 
@@ -54,9 +54,10 @@ function listStoredDatasets() {
 	return storedIDs;
 }
 
-function cacheContainID(id: string): boolean {
-	return false;
-}
+// function cacheContainID(id: string): boolean {
+// 	if(roomsCache[id].)
+// 	return false;
+// }
 
 // function  checkId(id: string) {
 // 	if(id === " ") {
@@ -124,12 +125,14 @@ export default class InsightFacade implements IInsightFacade {
 					// C2 implementation
 					// zip.file("index.htm")
 					ZipObj.folder("rooms").file("index.htm").async("string").then(async (indexString: string) => {
-						buildingList = utils.getBuilding(indexString);
-						numRows = utils.parseRoom(ZipObj, buildingList, roomData);
-						if(numRows > 0) {
+						// utils.addRoom(ZipObj, indexString, roomData);
+						let buildingList = utils.getBuilding(indexString);
+						// numRows = utils.loadRoom(ZipObj, await buildingList, roomData);
+						await utils.loadRoom(ZipObj, await buildingList, roomData);
+						if(roomData.length > 0) {
 							roomsCache[id] = roomData;
-							utils.writeToDisc(id, kind, numRows, roomData);
-							return resolve(Object.keys(roomData));
+							utils.writeToDisc(id, kind, roomData.length, roomData);
+							return resolve(Object.keys(roomsCache));
 						} else {
 							return reject(new InsightError("No valid room."));
 						}
