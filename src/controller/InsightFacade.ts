@@ -24,13 +24,7 @@ export const dataDir = "./data/";
 export const courseDir = "./courses/";
 export const roomDir = "./rooms";
 export const metaDir = "./data/meta/";
-const parse5 = require("parse5");
-
-// room related data
-let table: any[] = [];
-// let buildingList: any[] = []; // list of building objects
 let roomData: Room[] = [];
-const tableName: string = "views-table cols-5 table";
 
 /**
  * Cache for datasets
@@ -44,7 +38,6 @@ interface RoomsCache {
 	[idString: string]: Room[];
 }
 let roomsCache: RoomsCache = {};
-// coursesCache["course"] = sectionData;
 
 function listStoredDatasets() {
 	const dirents = fs.readdirSync(dataDir, {withFileTypes: true});
@@ -54,20 +47,6 @@ function listStoredDatasets() {
 	return storedIDs;
 }
 
-// function cacheContainID(id: string): boolean {
-// 	if(roomsCache[id].)
-// 	return false;
-// }
-
-// function  checkId(id: string) {
-// 	if(id === " ") {
-// 		return Promise.reject(new InsightError("Empty id"));
-// 	}
-// 	if (listStoredDatasets().includes(id)) {
-// 		return Promise.reject(new InsightError("dataset already exists"));
-// 	}
-// }
-
 /**
  * This is the main programmatic entry point for the project.
  * Method documentation is in IInsightFacade
@@ -75,6 +54,7 @@ function listStoredDatasets() {
  */
 export default class InsightFacade implements IInsightFacade {
 	constructor() {
+		// TODO: sync cache with disk
 		if (!fs.existsSync(dataDir)) {
 			fs.mkdirSync(dataDir);
 		}
@@ -89,6 +69,7 @@ export default class InsightFacade implements IInsightFacade {
 		sectionData = [];
 		courseData = [];
 		roomData = [];
+		// TODO: check cache contains id
 		if(id === " " || listStoredDatasets().includes(id)) {
 			return Promise.reject(new InsightError("Invalid id"));
 		}
@@ -146,6 +127,7 @@ export default class InsightFacade implements IInsightFacade {
 		});
 	}
 
+	// TODO: remove from cache
 	public removeDataset(id: string): Promise<string> {
 		return new Promise<string>(function (resolve, reject){
 			let dataPath = dataDir + id;

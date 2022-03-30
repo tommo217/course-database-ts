@@ -5,14 +5,7 @@ import {dataDir, metaDir} from "./InsightFacade";
 import parse5 from "parse5";
 import {Building} from "./Building";
 import {Room} from "./Room";
-import {JSZipObject} from "jszip";
-import {rejects} from "assert";
-import undefinedError = Mocha.utils.undefinedError;
-import {resolve} from "dns";
-// let numRows: number;
-// let dataDir = "./data/";
-// let metaDir = "./meta/";
-// let storedIDs: string[] = [];// array of all the stored dataset IDs
+
 let trList: any[];
 let roomTr: any[];
 let buildingList: Building[]; // list of building objects
@@ -20,19 +13,10 @@ const http = require("http");
 
 export class AddUtils {
 	constructor() {
-		let numRows = 0;
 		trList = [];
 		roomTr = [];
 		buildingList = [];
 	}
-
-	// public addRoomData(id: string, content: string, kind: InsightDatasetKind, indexString: string): Promise<any> {
-	// 	const indexDocument = parse5.parse(indexString);
-	// 	buildingList = this.getBuildingsHref(indexDocument);
-	// 	for(let building of buildingList) {
-	// 	}
-	// 	// open files
-	// }
 
 	public createSectionObjects(sectionArr: any, sectionData: Section[]) {
 		for(const sect of sectionArr) {
@@ -106,7 +90,7 @@ export class AddUtils {
 						if (obj.value === attrs_value) { // td
 							container.push(node);
 						} else if (tag === "tr") {
-							// add tr
+							// need to match tag and attrs_name before adding tr
 							container.push(node);
 						}
 					}
@@ -121,34 +105,10 @@ export class AddUtils {
 		}
 	}
 
-	public searchTbody(node: any, container: any[]){
-		if (node === undefined) {
-			return;
-		}
-		if (node.nodeName === "tbody" && node.tagName === "tbody") {// check tag
-			container.push(node);
-		}
-		if (node.childNodes !== undefined) {
-			for (let child of node.childNodes) {
-				this.searchTbody(child, container);
-			}
-		}
-	}
-
-	public getTbody(indexDocument: any) {
-		let tbodyArr: any[] = [];
-		this.searchTbody(indexDocument, tbodyArr);
-		let tb = tbodyArr[0];
-		this.searchElement("tr", "class", "", tb, trList);
-	}
-
 	public getBuilding(indexString: string): Promise<Building[]> {
-		let tempList: Building[] = [];
 		const indexDocument = parse5.parse(indexString);
 		let promises: Array<Promise<any>> = [];
-		// this.getTbody(indexDocument);
-		this.searchElement("tr", "class", "", indexDocument, trList);
-		// let buildingList: Building[] = []; // array of building objects
+		this.searchElement("tr", "class", "", indexDocument, trList);// attrs_name has to be "class" to be able to find actual trs within a table
 		if(trList.length >= 0) {
 			// get building shorname, fullname, address, href from tr
 			for (let tr of trList) {
@@ -182,7 +142,6 @@ export class AddUtils {
 					// building.href.replace(".", "rooms");
 				}
 				let building = new Building(fullName, code, address, href);
-				tempList.push(building);
 				promises.push(this.getGeolocation(building));
 			}
 		}
