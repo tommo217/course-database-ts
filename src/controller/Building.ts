@@ -3,25 +3,40 @@ export interface IndexableBuilding{
 }
 
 export class Building {
-	public _fullName?: string;
-	public _shortName?: string;
-	public _address?: string;
-	public _href?: string;
-	public _lat?: number;
-	public _lon?: number;
+	public fullName: string;
+	public shortName: string;
+	public address: string;
+	public href: string;
+	private lat: number = 0;
+	private lon: number = 0;
 
 
 	constructor(fullName: string, shortName: string, address: string,
-		href: string, lat: number, lon: number) {
-		this._fullName = fullName;
-		this._shortName = shortName;
-		this._address = address;
-		this._href = href;
-		this._lat = lat;
-		this._lon = lon;
+		href: string) {
+		this.fullName = fullName;
+		this.shortName = shortName;
+		this.address = address;
+		this.href = href;
 	}
 
-	// public get href(): string {
+
+	public getLat(): number {
+		return this.lat;
+	}
+
+	public setLat(value: number) {
+		this.lat = value;
+	}
+
+	public getLon(): number {
+		return this.lon;
+	}
+
+	public setLon(value: number) {
+		this.lon = value;
+	}
+
+// public get href(): string {
 	// 	return this._href as string;
 	// }
 	//
