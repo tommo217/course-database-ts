@@ -32,3 +32,4 @@ export class Room {
 		this.furniture = rooms_furniture;
 		this.href = rooms_href;
 	}
+}
