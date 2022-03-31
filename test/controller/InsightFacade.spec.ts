@@ -281,14 +281,13 @@ describe("InsightFacade", function () {
 			expect(insightDataset).to.deep.equal([{
 				id: "rooms",
 				kind: InsightDatasetKind.Rooms,
-				numRows: 64612, // TODO: change num rows
+				numRows: 364, // TODO: change num rows
 			}]);
 		});
 
 		/**
 		 * Add Room Dataset
 		 */
-		// This is a unit test. You should create more like this!
 		it("Should add a valid room dataset", function () {
 			const id: string = "rooms";
 			const content: string = datasetContents.get("rooms") ?? "";
@@ -345,6 +344,7 @@ describe("InsightFacade", function () {
 			// Will *fail* if there is a problem reading ANY dataset.
 			const loadDatasetPromises = [
 				insightFacade.addDataset("courses", datasetContents.get("courses") ?? "", InsightDatasetKind.Courses),
+				insightFacade.addDataset("rooms", datasetContents.get("rooms") ?? "", InsightDatasetKind.Rooms)
 			];
 
 			return Promise.all(loadDatasetPromises);

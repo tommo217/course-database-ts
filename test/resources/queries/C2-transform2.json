@@ -1,0 +1,130 @@
+{
+	"title": "C2: should perform transformations with COUNT",
+	"input": {
+		"WHERE": {
+			"IS": {
+				"courses_dept": "math"
+			}
+		},
+		"OPTIONS": {
+			"COLUMNS": [
+				"courses_dept",
+				"courses_id",
+				"counts"
+			],
+			"ORDER": {
+				"dir": "DOWN",
+				"keys": [
+					"courses_id"
+				]
+			}
+		},
+		"TRANSFORMATIONS": {
+			"GROUP": [
+				"courses_dept",
+				"courses_id"
+			],
+			"APPLY": [
+				{
+					"counts": {
+						"COUNT": "courses_id"
+					}
+				}
+			]
+		}
+	},
+	"expected": [{"courses_dept":"math","courses_id":"589","counts":1},
+		{"courses_dept":"math","courses_id":"562","counts":1},
+		{"courses_dept":"math","courses_id":"559","counts":1},
+		{"courses_dept":"math","courses_id":"552","counts":1},
+		{"courses_dept":"math","courses_id":"551","counts":1},
+		{"courses_dept":"math","courses_id":"550","counts":1},
+		{"courses_dept":"math","courses_id":"546","counts":1},
+		{"courses_dept":"math","courses_id":"545","counts":1},
+		{"courses_dept":"math","courses_id":"544","counts":1},
+		{"courses_dept":"math","courses_id":"541","counts":1},
+		{"courses_dept":"math","courses_id":"539","counts":1},
+		{"courses_dept":"math","courses_id":"537","counts":1},
+		{"courses_dept":"math","courses_id":"534","counts":1},
+		{"courses_dept":"math","courses_id":"532","counts":1},
+		{"courses_dept":"math","courses_id":"527","counts":1},
+		{"courses_dept":"math","courses_id":"525","counts":1},
+		{"courses_dept":"math","courses_id":"523","counts":1},
+		{"courses_dept":"math","courses_id":"521","counts":1},
+		{"courses_dept":"math","courses_id":"516","counts":1},
+		{"courses_dept":"math","courses_id":"515","counts":1},
+		{"courses_dept":"math","courses_id":"510","counts":1},
+		{"courses_dept":"math","courses_id":"508","counts":1},
+		{"courses_dept":"math","courses_id":"507","counts":1},
+		{"courses_dept":"math","courses_id":"503","counts":1},
+		{"courses_dept":"math","courses_id":"502","counts":1},
+		{"courses_dept":"math","courses_id":"501","counts":1},
+		{"courses_dept":"math","courses_id":"450","counts":1},
+		{"courses_dept":"math","courses_id":"444","counts":1},
+		{"courses_dept":"math","courses_id":"442","counts":1},
+		{"courses_dept":"math","courses_id":"441","counts":1},
+		{"courses_dept":"math","courses_id":"440","counts":1},
+		{"courses_dept":"math","courses_id":"437","counts":1},
+		{"courses_dept":"math","courses_id":"427","counts":1},
+		{"courses_dept":"math","courses_id":"425","counts":1},
+		{"courses_dept":"math","courses_id":"423","counts":1},
+		{"courses_dept":"math","courses_id":"422","counts":1},
+		{"courses_dept":"math","courses_id":"421","counts":1},
+		{"courses_dept":"math","courses_id":"420","counts":1},
+		{"courses_dept":"math","courses_id":"419","counts":1},
+		{"courses_dept":"math","courses_id":"418","counts":1},
+		{"courses_dept":"math","courses_id":"414","counts":1},
+		{"courses_dept":"math","courses_id":"406","counts":1},
+		{"courses_dept":"math","courses_id":"405","counts":1},
+		{"courses_dept":"math","courses_id":"401","counts":1},
+		{"courses_dept":"math","courses_id":"400","counts":1},
+		{"courses_dept":"math","courses_id":"360","counts":1},
+		{"courses_dept":"math","courses_id":"345","counts":1},
+		{"courses_dept":"math","courses_id":"342","counts":1},
+		{"courses_dept":"math","courses_id":"340","counts":1},
+		{"courses_dept":"math","courses_id":"335","counts":1},
+		{"courses_dept":"math","courses_id":"323","counts":1},
+		{"courses_dept":"math","courses_id":"322","counts":1},
+		{"courses_dept":"math","courses_id":"321","counts":1},
+		{"courses_dept":"math","courses_id":"320","counts":1},
+		{"courses_dept":"math","courses_id":"318","counts":1},
+		{"courses_dept":"math","courses_id":"317","counts":1},
+		{"courses_dept":"math","courses_id":"316","counts":1},
+		{"courses_dept":"math","courses_id":"313","counts":1},
+		{"courses_dept":"math","courses_id":"312","counts":1},
+		{"courses_dept":"math","courses_id":"310","counts":1},
+		{"courses_dept":"math","courses_id":"308","counts":1},
+		{"courses_dept":"math","courses_id":"307","counts":1},
+		{"courses_dept":"math","courses_id":"305","counts":1},
+		{"courses_dept":"math","courses_id":"303","counts":1},
+		{"courses_dept":"math","courses_id":"302","counts":1},
+		{"courses_dept":"math","courses_id":"301","counts":1},
+		{"courses_dept":"math","courses_id":"300","counts":1},
+		{"courses_dept":"math","courses_id":"264","counts":1},
+		{"courses_dept":"math","courses_id":"257","counts":1},
+		{"courses_dept":"math","courses_id":"256","counts":1},
+		{"courses_dept":"math","courses_id":"255","counts":1},
+		{"courses_dept":"math","courses_id":"253","counts":1},
+		{"courses_dept":"math","courses_id":"227","counts":1},
+		{"courses_dept":"math","courses_id":"226","counts":1},
+		{"courses_dept":"math","courses_id":"223","counts":1},
+		{"courses_dept":"math","courses_id":"221","counts":1},
+		{"courses_dept":"math","courses_id":"220","counts":1},
+		{"courses_dept":"math","courses_id":"217","counts":1},
+		{"courses_dept":"math","courses_id":"215","counts":1},
+		{"courses_dept":"math","courses_id":"210","counts":1},
+		{"courses_dept":"math","courses_id":"200","counts":1},
+		{"courses_dept":"math","courses_id":"190","counts":1},
+		{"courses_dept":"math","courses_id":"184","counts":1},
+		{"courses_dept":"math","courses_id":"180","counts":1},
+		{"courses_dept":"math","courses_id":"152","counts":1},
+		{"courses_dept":"math","courses_id":"121","counts":1},
+		{"courses_dept":"math","courses_id":"120","counts":1},
+		{"courses_dept":"math","courses_id":"110","counts":1},
+		{"courses_dept":"math","courses_id":"105","counts":1},
+		{"courses_dept":"math","courses_id":"104","counts":1},
+		{"courses_dept":"math","courses_id":"103","counts":1},
+		{"courses_dept":"math","courses_id":"102","counts":1},
+		{"courses_dept":"math","courses_id":"101","counts":1},
+		{"courses_dept":"math","courses_id":"100","counts":1}]
+}

@@ -1,5 +1,5 @@
 {
-	"title": "C2: should return error when columns contains something ",
+	"title": "C2: should perform transformations with AVG",
 	"input": {
 		"WHERE": {
 			"IS": {
