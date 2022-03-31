@@ -16,6 +16,7 @@ interface Query {
 
 /**
  * Given the query JSON, return query struct with body & options
+ * give error if query has syntax or semantic errors
  */
 function parseQuery(input: any): Query{
 	if (input.WHERE !== undefined && input.OPTIONS !== undefined) {
@@ -42,7 +43,6 @@ function parseQuery(input: any): Query{
 }
 
 // verifies idstring is singular & exists on disk
-// TODO: change to verify cache?
 function verifyIdString(q: Query) {
 	if (q.body.idString !== q.options.idString) {
 		throw new Error("WHERE and OPTIONS referencing different idstrings");

@@ -3,7 +3,7 @@
  */
 
 import {parseKey, Query} from "./Query";
-import {IndexableSection, Section} from "../controller/Section";
+import {Indexable, Section} from "../controller/Section";
 import {InsightResult} from "../controller/IInsightFacade";
 import {mFields, sFields} from "./Filter";
 
@@ -82,7 +82,7 @@ export class Options {
 	// transform section to insightResult and add idstrings
 	public transformToResult(sec: Section): InsightResult {
 		let res: InsightResult = {};
-		let idxSec = sec as IndexableSection;
+		let idxSec = sec as Indexable;
 		for (let key in idxSec) {
 			const cell = idxSec[key];
 			if (cell !== undefined) {

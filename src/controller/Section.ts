@@ -1,4 +1,4 @@
-export interface IndexableSection{
+export interface Indexable {
 	[key: string]: string | number | undefined;  // for typecast as dict
 }
 

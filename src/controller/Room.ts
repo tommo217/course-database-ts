@@ -1,7 +1,4 @@
-export interface IndexableRoom{
-	[key: string]: string | number | undefined;  // for typecast as dict
-}
-
+// also an indexable
 export class Room {
 	public fullname?: string;
 	public shortname?: string;
