@@ -6,12 +6,13 @@ import {
 	InsightResult,
 	ResultTooLargeError
 } from "./IInsightFacade";
-import {Section} from "./Section";
+import {Indexable, Section} from "./Section";
 import {Room} from "./Room";
 import {parseQuery, Query} from "../model/Query";
 import * as fs from "fs-extra";
 import JSZip from "jszip";
 import {AddUtils} from "./AddUtils";
+import {isSections, processRow, readDatasetFromDisk, sliceIntoObjects} from "./QueryUtils";
 
 let zip = new JSZip();
 let utils = new AddUtils();
@@ -54,13 +55,16 @@ function listStoredDatasets() {
  */
 export default class InsightFacade implements IInsightFacade {
 	constructor() {
-		// TODO: sync cache with disk
 		if (!fs.existsSync(dataDir)) {
 			fs.mkdirSync(dataDir);
 		}
 		if (!fs.existsSync(metaDir)) {
 			fs.mkdirSync(metaDir);
 		}
+		// NOTE: does NOT support multiple concurrent InsightFacades
+		roomsCache = {};
+		coursesCache = {};
+		this.readCacheFromDisk();
 
 		console.log("InsightFacadeImpl::init()");
 	}
@@ -201,25 +205,52 @@ export default class InsightFacade implements IInsightFacade {
 			});
 		});
 	}
+
+	/**
+	 * read from dataDir to fill coursesCache and roomsCache
+	 */
+	private readCacheFromDisk() {
+		listStoredDatasets().forEach((idString) => {
+			try {
+				let entries = readDatasetFromDisk(idString);
+				if (isSections(entries)) {
+					coursesCache[idString] = entries;
+				} else {
+					roomsCache[idString] = entries;
+				}
+
+			} catch (err) {
+				console.warn("Error in reading stored dataset: " + idString);
+				console.log(err);
+			}
+		});
+	}
 }
 
 /**
- * Read the file in query to search for query result
+ * Search for query result in current cache or on disk
  * if result size exceeds 5000, throw error.
  */
 function queryForResult(q: Query): InsightResult[]{
 	const resultLimit = 5000;
+	const targetDataset = q.body.idString;
+	let entries: Section[] | Room[];
 	let results: InsightResult[] = [];
 
-	const filePath = dataDir + q.options.idString;
-	const content: string = fs.readFileSync(filePath, "utf-8");
-	const secStrings = sliceIntoObjects(content);
+	if (coursesCache[targetDataset] !== undefined) {
+		entries = coursesCache[targetDataset];
+	} else if (roomsCache[targetDataset] !== undefined) {
+		entries = roomsCache[targetDataset];
+	} else {
+		entries = readDatasetFromDisk(targetDataset);
+	}
 
-	// process all sections
-	secStrings.map((secStr) => {
-		processSection(secStr, q, results);
+	// process all rows
+	entries.map((row) => {
+		processRow(row as Indexable, q, results);
 	});
 
+	// apply transformations if needed
 	if (q.transformations !== undefined) {
 		results = q.transformations.transformResults(results);
 		results.map((res) => {
@@ -235,48 +266,3 @@ function queryForResult(q: Query): InsightResult[]{
 	q.options.sortRsults(results);
 	return results;
 }
-
-/**
- * Helper, slice content into string array of JSON objects
- */
-function sliceIntoObjects(content: string): string[] {
-	let secStrings: string[] = [];
-	if (content.indexOf("[") > 0) {
-		content = content.slice(content.indexOf("["));
-	}
-	while (content.indexOf("{") > -1) {
-		const objStart = content.indexOf("{");
-		const objEnd = content.indexOf("}");
-		if (objStart < objEnd) {
-			let next = content.slice(objStart, objEnd + 1);
-			content = content.slice(objEnd + 1); // slice off this object
-			secStrings.push(next);
-		} else {
-			throw new Error("Incorrect dataset format");
-		}
-	}
-	return secStrings;
-}
-
-/**
- * Filter given section based on query options
- */
-function processSection(secStr: string, query: Query, results: InsightResult[]) {
-	try {
-		const sec: Section = JSON.parse(secStr);
-		if (query.body.evaluateEntry(sec)) {
-			if (!query.options.haveTransform) {
-				// simple re-cast of columns
-				let res = query.options.transformToResult(sec);
-				res = query.options.filterColumns(res);
-				results.push(res);
-			} else {
-				results.push(sec as InsightResult);
-			}
-		}
-	} catch (err) {
-		console.warn("Error in reading section data: " + secStr);
-		console.log(err);
-	}
-}
-

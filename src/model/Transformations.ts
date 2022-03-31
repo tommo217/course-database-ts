@@ -4,6 +4,7 @@ import {App} from "../App";
 import {compareByField, Options} from "./Options";
 import {InsightResult} from "../controller/IInsightFacade";
 import InsightFacade from "../controller/InsightFacade";
+import Decimal from "decimal.js";
 
 export class Transformations {
 	public idString: string;
@@ -56,6 +57,9 @@ export class Transformations {
 				nextGroup = [];
 				nextGroup.push(sorted[i]);
 			}
+		}
+		if (nextGroup.length > 0) {
+			groups.push(nextGroup);
 		}
 		// for each group, apply operation using applyRules
 		// each group results in a row
@@ -165,16 +169,14 @@ class ApplyRule {
 			if (!mFields.includes(this.key)) {
 				throw new Error("Invalid key type in AVG");
 			}
-			// TODO: check for rounding err
-			this.applyResult = Math.round(this.sumColumn(group, this.key) / group.length * 100) / 100;
+			this.applyResult = Number( (this.sumColumn(group, this.key).toNumber() / group.length).toFixed(2) );
 		} else if (this.applyToken === "COUNT") {
-			// TODO: count num unique occurances, refactor sameGroup
-			this.applyResult = group.length;
+			this.applyResult = this.countUniques(group, this.key);
 		} else if (this.applyToken === "SUM") {
 			if (!mFields.includes(this.key)) {
 				throw new Error("Invalid key type in SUM");
 			}
-			this.applyResult = this.sumColumn(group, this.key);
+			this.applyResult = this.sumColumn(group, this.key).toNumber();
 		}
 	}
 
@@ -183,12 +185,27 @@ class ApplyRule {
 	 * @param group array of insightresults
 	 * @param col column to sum down
 	 */
-	private sumColumn(group: InsightResult[], col: string): number {
-		let sum = 0;
+	private sumColumn(group: InsightResult[], col: string): Decimal {
+		let sum: Decimal = new Decimal(0);
 		for (let key in group) {
-			sum += group[key][col] as number;
+			sum = sum.plus(group[key][col] as number);
+			// sum += group[key][col] as number;
 		}
 		return sum;
+	}
+
+	private countUniques(group: InsightResult[], col: string): number {
+		let uniqueCounts = 0;
+		for (let i = 0; i < group.length; i++) {
+			if (i === 0) {
+				uniqueCounts++;
+			} else {
+				if (group[i][col] !== group[i - 1][col]) {
+					uniqueCounts++;
+				}
+			}
+		}
+		return uniqueCounts;
 	}
 
 	private deserialize(input: any) {

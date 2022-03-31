@@ -2,7 +2,7 @@
  * 'Filters' portion of the query object
  */
 
-import {IndexableSection, Section} from "../controller/Section";
+import {Indexable, Section} from "../controller/Section";
 import {parseKey} from "./Query";
 
 /**
@@ -46,7 +46,7 @@ function parseFilter(input: any): Filter{
 interface Filter {
 	idString: string;
 	deserialize(input: any): void;
-	evaluateEntry(section: Section): boolean; // check if section satisfies filter
+	evaluateEntry(entry: Indexable): boolean; // check if section satisfies filter
 }
 
 const logicOps = ["AND", "OR"];
@@ -99,8 +99,8 @@ class LogicComparison implements Filter{
 		});
 	}
 
-	public evaluateEntry(entry: Section): boolean {
-		// TODO: compare against speed of iterative evaluation of filters
+	public evaluateEntry(entry: Indexable): boolean {
+		// To optimize: compare against speed of iterative evaluation of filters
 		let evals = this.filters.map((filter) => filter.evaluateEntry(entry));
 		if (this.logic === logicOps[0]) { // AND
 			return !evals.includes(false); // true if none of the filters evaluate to false
@@ -151,15 +151,15 @@ class MComparison implements Filter{
 		return result;
 	}
 
-	public evaluateEntry(entry: Section): boolean {
-		let entryDic = entry as IndexableSection;
+	public evaluateEntry(entry: Indexable): boolean {
+		// let entryDic = entry as Indexable;
 		// guard for non-existent & incorrectly formatted value
-		if (typeof entryDic[this.mfield] === "string"
-			|| entryDic === undefined) {
-			throw new Error("Invalid entry: " + entryDic[this.mfield]);
+		if (typeof entry[this.mfield] === "string"
+			|| entry === undefined) {
+			throw new Error("Invalid entry: " + entry[this.mfield]);
 		}
 
-		return this.compareVal(entryDic[this.mfield] as number);
+		return this.compareVal(entry[this.mfield] as number);
 	}
 
 	// Compare given number to this.num by the operator
@@ -220,18 +220,17 @@ class SComparison implements Filter{
 		return result;
 	}
 
-	public evaluateEntry(entry: Section): boolean {
-		let entryDic = entry as IndexableSection;
+	public evaluateEntry(entry: Indexable): boolean {
+		// let entryDic = entry as Indexable;
 		// guard for non-existent & incorrectly formatted value
-		if (entryDic === undefined
-			|| typeof entryDic[this.sfield] === "number") {
-			throw new Error("Invalid entry: " + entryDic[this.sfield]);
+		if (entry === undefined
+			|| typeof entry[this.sfield] === "number") {
+			throw new Error("Invalid entry: " + entry[this.sfield]);
 		}
 
-		return this.compareStr(entryDic[this.sfield] as string);
+		return this.compareStr(entry[this.sfield] as string);
 	}
 
-	// TODO: add test for this
 	private compareStr(str: string): boolean {
 		const matchPattern = RegExp("^"
 			+ this.inputStr.replaceAll("*", ".*")
@@ -269,9 +268,9 @@ class Negation implements Filter{
 		return result;
 	}
 
-	public evaluateEntry(section: Section): boolean {
+	public evaluateEntry(entry: Indexable): boolean {
 		if (this.filter){
-			return !this.filter.evaluateEntry(section);
+			return !this.filter.evaluateEntry(entry);
 		}
 		throw new Error("Negation lacks filter");
 	}
