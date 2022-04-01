@@ -89,10 +89,32 @@ export default class Server {
 		this.express.get("/echo/:msg", Server.echo);
 		// TODO: your other endpoints should go here
 		this.express.put("/addCourse", Server.addCourse);
-		this.express.put("/addRoom/:", Server.addRoom);
+		this.express.put("/addRoom", Server.addRoom);
 		this.express.get("/list", Server.facade.listDatasets);
 		this.express.post("/query", Server.query);
+		this.express.put("/dataset/:id/:kind", Server.dataset);
 
+	}
+
+	private static dataset(req: Request, res: Response) {
+		const content = req.body.toString("base64");
+		let dataId = req.params.id;
+		let dataKind = InsightDatasetKind.Courses; // default
+		if(req.params.kind === "rooms") {
+			dataKind = InsightDatasetKind.Rooms;
+		} else if(req.params.kind === "courses") {
+			dataKind = InsightDatasetKind.Courses;
+		} else {
+			// console.log("in else");
+			return res.status(400).json({error:"Not supported kind"});
+		}
+		Server.facade.addDataset(dataId,content,dataKind).then((arr) => {
+			// console.log("Add course success");
+			res.status(200).json({result: arr});
+		}).catch((err) => {
+			// console.log("Add course fail");
+			res.status(400).json({error:err});
+		});
 	}
 
 	private static addCourse(req: Request, res: Response) {
@@ -107,9 +129,16 @@ export default class Server {
 		});
 	}
 
-	private static addRoom() {
+	private static addRoom(req: Request, res: Response) {
+		// console.log(req.params);
 		const content = fs.readFileSync("./test/resources/archives/rooms.zip").toString("base64");
-		Server.facade.addDataset("rooms", content, InsightDatasetKind.Rooms);
+		Server.facade.addDataset("rooms", content, InsightDatasetKind.Rooms).then((arr) => {
+			// console.log("Add course success");
+			res.status(200).json({result: arr});
+		}).catch((err) => {
+			// console.log("Add course fail");
+			res.status(400).json({error:err});
+		});
 	}
 
 	private static query(req: Request, res: Response) {
