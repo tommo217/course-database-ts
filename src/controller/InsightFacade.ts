@@ -73,8 +73,7 @@ export default class InsightFacade implements IInsightFacade {
 		sectionData = [];
 		courseData = [];
 		roomData = [];
-		// TODO: check cache contains id
-		if(id === " " || listStoredDatasets().includes(id)) {
+		if(id === " " || InsightFacade.datasetExists(id)) {
 			return Promise.reject(new InsightError("Invalid id"));
 		}
 		return new Promise(function (resolve, reject) {
@@ -131,7 +130,13 @@ export default class InsightFacade implements IInsightFacade {
 		});
 	}
 
-	// TODO: remove from cache
+	private static datasetExists(id: string): boolean {
+		return listStoredDatasets().includes(id)
+			|| Object.keys(roomsCache).includes(id)
+			|| Object.keys(coursesCache).includes(id);
+	}
+
+
 	public removeDataset(id: string): Promise<string> {
 		return new Promise<string>(function (resolve, reject){
 			let dataPath = dataDir + id;
@@ -140,6 +145,8 @@ export default class InsightFacade implements IInsightFacade {
 				try{
 					fs.unlinkSync(dataPath);
 					fs.unlinkSync(metaPath);
+					delete roomsCache[id];
+					delete coursesCache[id];
 				}catch (err) {
 					return reject(new InsightError("Error in deleting file."));
 				}

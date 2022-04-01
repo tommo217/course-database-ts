@@ -297,21 +297,32 @@ describe("InsightFacade", function () {
 			});
 		});
 
-		it("should fulfill with 1 correct dataset ID", function (){
+		it("should add room with 1 correct dataset ID", function (){
 			const content: string = datasetContents.get("rooms") ?? "";
 			insightFacade.addDataset("rooms", content, InsightDatasetKind.Rooms).then((result: string[]) => {
 				expect(result).to.deep.equal(["rooms"]);
 			});
 		});
 
+		it("should reject mismatch dataset and kind", function (){
+			const content: string = datasetContents.get("rooms") ?? "";
+			insightFacade.addDataset("rooms", content, InsightDatasetKind.Courses).then((res) => {
+				expect.fail("should fail");
+			}).catch((err) => {
+				expect(err).to.be.instanceof(InsightError);
+			});
+		});
 
 		/**
-		 * Remove Room Dataset (copied from Tom's suite)
+		 * Remove Room Dataset
 		 */
 		it("should fulfill on successful removal", async function () {
 			const content: string = datasetContents.get("rooms") ?? "";
-			await insightFacade.addDataset("rooms", content, InsightDatasetKind.Rooms);
-			insightFacade.removeDataset("rooms")
+			const result = await insightFacade.addDataset("rooms", content, InsightDatasetKind.Rooms);
+			const insightDataset = await insightFacade.listDatasets();
+			insightFacade.removeDataset("rooms").then((res: string) => {
+				expect(res).to.equal("rooms");
+			})
 				.catch((err) => {
 					expect.fail();
 				});
@@ -322,9 +333,38 @@ describe("InsightFacade", function () {
 			await insightFacade.addDataset("rooms", content, InsightDatasetKind.Rooms);
 			await insightFacade.addDataset("rooms-2", content, InsightDatasetKind.Rooms);
 			await insightFacade.addDataset("rooms-3", content, InsightDatasetKind.Rooms);
+			const insightDataset = await insightFacade.listDatasets();
+
+			expect(insightDataset).to.have.deep.members([{
+				id: "rooms",
+				kind: InsightDatasetKind.Rooms,
+				numRows: 364
+			},{
+				id: "rooms-2",
+				kind: InsightDatasetKind.Rooms,
+				numRows: 364
+			},{
+				id: "rooms-3",
+				kind: InsightDatasetKind.Rooms,
+				numRows: 364
+			}
+			]);
 
 			const result = await insightFacade.removeDataset("rooms-2");
 			expect(result).to.equal("rooms-2");
+
+			const insightDatasetAfter = await insightFacade.listDatasets();
+
+			expect(insightDatasetAfter).to.have.deep.members([{
+				id: "rooms",
+				kind: InsightDatasetKind.Rooms,
+				numRows: 364
+			},{
+				id: "rooms-3",
+				kind: InsightDatasetKind.Rooms,
+				numRows: 364
+			}
+			]);
 		});
 	});
 
@@ -352,7 +392,7 @@ describe("InsightFacade", function () {
 
 		after(function () {
 			console.info(`After: ${this.test?.parent?.title}`);
-			// fs.removeSync(persistDir);
+			fs.removeSync(persistDir);
 		});
 
 		type PQErrorKind = "ResultTooLargeError" | "InsightError";
