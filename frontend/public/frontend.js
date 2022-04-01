@@ -20,7 +20,8 @@ function sendData(form, formNum) {
 	// Define what happens on successful data submission
 	XHR.addEventListener( "load", function(event) {
 		if (XHR.status === 200) {
-			alert( XHR.responseText );
+			console.log(XHR.responseText);
+			printResult(XHR.responseText, tableWrapper1);
 		} else {
 			alert("API returned error: " + XHR.responseText);
 		}
@@ -33,7 +34,7 @@ function sendData(form, formNum) {
 
 	// Set up our request
 	XHR.open( "POST", "http://localhost:4321/query" );
-
+	XHR.setRequestHeader("Content-Type","application/json")
 	// The data sent is what the user provided in the form
 	XHR.send( query );
 }
@@ -90,4 +91,63 @@ function formToQuery1(formData) {
 	}
 
 	return JSON.stringify(query);
+}
+
+const tableWrapper1 = document.getElementById("table-wrapper-1")
+
+function clearResponseTable() {
+	const table = document.getElementById("responseTable");
+	if (table !== null) {
+		table.remove();
+	}
+	const text = document.getElementById("responseText");
+	if (text !== null) {
+		text.remove();
+	}
+}
+
+function printResult(responseText, element) {
+	clearResponseTable();
+
+	let response = JSON.parse(responseText);
+	let resData = response['result'];
+
+	// indicate empty result
+	if (resData.length === 0) {
+		let responseTxt = document.createElement('label');
+		responseTxt.appendChild(document.createElement('br'));
+		responseTxt.append(document.createTextNode("Empty Result!"));
+		responseTxt.setAttribute('id', 'responseText');
+		responseTxt.style.color = "#8D8D8D";
+		element.appendChild(responseTxt);
+		return;
+	}
+
+	let table = document.createElement('table');
+	table.setAttribute('id', 'responseTable')
+
+	// create label row
+	let labelRow = document.createElement('tr');
+	for (let label in resData[0]) {
+		let td = document.createElement('td');
+		let text = document.createTextNode(label);
+		td.appendChild(text);
+		labelRow.appendChild(td);
+	}
+	table.appendChild(labelRow)
+
+	// add data rows
+	for (let i = 0; i < resData.length; i++) {
+		let row = document.createElement('tr');
+		for (let label in resData[i]) {
+			let td = document.createElement('td');
+			let text = document.createTextNode(resData[i][label]);
+			td.appendChild(text);
+			row.appendChild(td);
+		}
+		table.appendChild(row)
+	}
+
+	// let div = document.getElementById("table-wrapper-1") // TODO: make dynamic
+	element.appendChild(table)
 }

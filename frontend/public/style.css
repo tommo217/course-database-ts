@@ -14,3 +14,18 @@
 .button:hover {
 	cursor: pointer;
 }
+
+.table-wrapper
+{
+	border: 1px solid #CCC;
+	border-radius: 1em;
+	width: 500px;
+	height: 200px;
+	overflow: auto;
+	padding-left: 20px;
+}
+
+td, th {
+	border: 1px solid #999;
+	padding: 0.5rem;
+}
