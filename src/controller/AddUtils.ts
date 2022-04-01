@@ -106,6 +106,8 @@ export class AddUtils {
 	}
 
 	public getBuilding(indexString: string): Promise<Building[]> {
+		buildingList = [];
+		trList = [];
 		const indexDocument = parse5.parse(indexString);
 		let promises: Array<Promise<any>> = [];
 		this.searchElement("tr", "class", "", indexDocument, trList);// attrs_name has to be "class" to be able to find actual trs within a table
