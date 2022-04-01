@@ -106,6 +106,8 @@ export class AddUtils {
 	}
 
 	public getBuilding(indexString: string): Promise<Building[]> {
+		buildingList = [];
+		trList = [];
 		const indexDocument = parse5.parse(indexString);
 		let promises: Array<Promise<any>> = [];
 		this.searchElement("tr", "class", "", indexDocument, trList);// attrs_name has to be "class" to be able to find actual trs within a table
@@ -189,7 +191,7 @@ export class AddUtils {
 			let seatNumber: number = 0;
 			this.searchElement("td", "class", "views-field views-field-field-room-capacity", tr, seatNumberArr);
 			if(seatNumberArr.length > 0) {
-				seatNumber = seatNumberArr[0].childNodes[0].value.trim();
+				seatNumber = Number(seatNumberArr[0].childNodes[0].value.trim());
 			}
 
 			let furnitureTypeArr: any[] = [];
