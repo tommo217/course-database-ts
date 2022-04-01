@@ -152,11 +152,11 @@ class MComparison implements Filter{
 	}
 
 	public evaluateEntry(entry: Indexable): boolean {
-		// let entryDic = entry as Indexable;
+
 		// guard for non-existent & incorrectly formatted value
 		if (typeof entry[this.mfield] === "string"
 			|| entry === undefined) {
-			throw new Error("Invalid mfield entry: " + entry[this.mfield]);
+			throw new Error("Expected mfield entry " + this.mfield + " to be number, but is string");
 		}
 
 		return this.compareVal(entry[this.mfield] as number);
@@ -226,7 +226,7 @@ class SComparison implements Filter{
 		// guard for non-existent & incorrectly formatted value
 		if (entry === undefined
 			|| typeof entry[this.sfield] === "number") {
-			throw new Error("Invalid sfield entry: " + entry[this.sfield]);
+			throw new Error("Expected sfield entry " + this.sfield + " to be string, but is number");
 		}
 
 		return this.compareStr(entry[this.sfield] as string);
