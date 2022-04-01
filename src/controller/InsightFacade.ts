@@ -73,7 +73,6 @@ export default class InsightFacade implements IInsightFacade {
 		sectionData = [];
 		courseData = [];
 		roomData = [];
-		// TODO: check cache contains id
 		if(id === " " || InsightFacade.datasetExists(id)) {
 			return Promise.reject(new InsightError("Invalid id"));
 		}
@@ -137,7 +136,7 @@ export default class InsightFacade implements IInsightFacade {
 			|| Object.keys(coursesCache).includes(id);
 	}
 
-	// TODO: remove from cache
+
 	public removeDataset(id: string): Promise<string> {
 		return new Promise<string>(function (resolve, reject){
 			let dataPath = dataDir + id;
