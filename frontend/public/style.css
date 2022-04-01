@@ -7,6 +7,8 @@
 	text-decoration: none;
 	display: inline-block;
 	font-size: 16px;
+	/* Align buttons with the text fields */
+	/*padding-left: 90px; !* same size as the label elements *!*/
 }
 
 .button:hover {
