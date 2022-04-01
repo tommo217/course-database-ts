@@ -1,19 +1,22 @@
-// document.getElementById("click-me-button").addEventListener("click", handleClickMe);
-//
-// function handleClickMe() {
-// 	alert("Button Clicked!");
-// }
+const tableWrapper1 = document.getElementById("table-wrapper-1")
+const tableWrapper2 = document.getElementById("table-wrapper-2")
 
 function sendData(form, formNum) {
 	const XHR = new XMLHttpRequest();
 
 	// Bind the FormData object and the form element
-	const FD = new FormData( form );
+	let FD = new FormData( form );
 	let query = "";
 
 	if (formNum === 1) {
 		query = formToQuery1(FD);
 	}
+
+	if (formNum === 2) {
+		query = formToQuery2(FD);
+	}
+
+	let resultTable = formNum === 1 ? tableWrapper1 : tableWrapper2;
 
 	console.log(query)
 
@@ -21,7 +24,7 @@ function sendData(form, formNum) {
 	XHR.addEventListener( "load", function(event) {
 		if (XHR.status === 200) {
 			console.log(XHR.responseText);
-			printResult(XHR.responseText, tableWrapper1);
+			printResult(XHR.responseText, resultTable);
 		} else {
 			alert("API returned error: " + XHR.responseText);
 		}
@@ -40,12 +43,19 @@ function sendData(form, formNum) {
 }
 
 // Access the form element...
-const form1 = document.getElementById( "query1" );
+let form1 = document.getElementById( "query1" );
 
 // ...and take over its submit event.
 form1.addEventListener( "submit", function ( event ) {
 	event.preventDefault();
 	sendData(form1, 1);
+} );
+
+let form2 = document.getElementById("query2");
+
+form2.addEventListener( "submit", function ( event ) {
+	event.preventDefault();
+	sendData(form2, 2);
 } );
 
 // parse formData as insightFacade query
@@ -93,7 +103,102 @@ function formToQuery1(formData) {
 	return JSON.stringify(query);
 }
 
-const tableWrapper1 = document.getElementById("table-wrapper-1")
+let trackedMinSeats = 0; // TODO: find better solution
+const furnitureList = document.getElementById("furniture-list");
+function formToQuery2(formData) {
+ 	let query = {}
+	let minSeats = trackedMinSeats;
+	let option = formData.get('furniture');
+
+	console.log("DEBUG MIN SEATS: "+ minSeats)
+	console.log("DEBUG : " + option);
+
+	let [optionId, furniturePref] = optionToQueryComponent(option);
+
+	if (optionId !== 0) {
+		query = {
+			"WHERE": {
+				"AND": [ furniturePref,
+						{ "GT": { "rooms_seats": minSeats } }
+					]
+			},
+			"OPTIONS": {
+				"COLUMNS": [
+					"rooms_fullname",
+					"rooms_number",
+					"rooms_seats",
+					"rooms_furniture"
+				],
+				"ORDER": "rooms_seats"
+			}
+		}
+	} else {
+		query = {
+			"WHERE": {
+				"AND": [
+					{ "GT": { "rooms_seats": minSeats } }
+				]
+			},
+			"OPTIONS": {
+				"COLUMNS": [
+					"rooms_fullname",
+					"rooms_number",
+					"rooms_seats",
+					"rooms_furniture"
+				],
+				"ORDER": "rooms_seats"
+			}
+		}
+	}
+
+	return JSON.stringify(query);
+}
+
+function optionToQueryComponent(option) {
+	let queryComponent = {};
+	let optionId = 0;
+
+	for (let i = 0; i < furnitureList.options.length; i++) {
+		if (furnitureList.options[i].value === option) {
+			optionId = i;
+		}
+	}
+
+	switch (optionId) {
+		case 0:
+			break;
+		case 1:
+			queryComponent = {"OR": [
+				{ "IS": { "rooms_furniture": "Classroom-Movable Tables & Chairs"} },
+				{ "IS": { "rooms_furniture": "Classroom-Moveable Tables & Chairs"} }
+				] }
+			break;
+		case 2:
+			queryComponent = {"OR": [
+					{ "IS": { "rooms_furniture": "Classroom-Fixed Tables/Fixed Chairs"} }
+				] }
+			break;
+		case 3:
+			queryComponent = {"OR": [
+					{ "IS": { "rooms_furniture": "Classroom-Fixed Tables/Movable Chairs"} },
+					{ "IS": { "rooms_furniture": "Classroom-Fixed Tables/Moveable Chairs"} }
+				] }
+			break;
+		case 4:
+			queryComponent = {"OR": [
+					{ "IS": { "rooms_furniture": "Classroom-Hybrid Furniture"} }
+				] }
+			break;
+		case 5:
+			queryComponent = {"OR": [
+					{ "IS": { "rooms_furniture": "Classroom-Learn Lab"} }
+				] }
+			break;
+	}
+
+	return [optionId, queryComponent];
+}
+
 
 function clearResponseTable() {
 	const table = document.getElementById("responseTable");
@@ -151,3 +256,36 @@ function printResult(responseText, element) {
 	// let div = document.getElementById("table-wrapper-1") // TODO: make dynamic
 	element.appendChild(table)
 }
+
+
+// --------- Interactive Elements In Query 2 --------------
+
+var range = document.getElementById('minSeatsRange');
+var field = document.getElementById('minSeatsNum');
+
+range.addEventListener('input', function (e) {
+	field.setAttribute('value', e.target.value)
+	field.value = e.target.value;
+	trackedMinSeats = e.target.value;
+});
+field.addEventListener('input', function (e) {
+	range.setAttribute('value', e.target.value)
+	range.value = e.target.value;
+	trackedMinSeats = e.target.value;
+});
+
+// var movChairs = document.getElementById('movable-chairs')
+// var movTables = document.getElementById('movable-tables')
+// var labs = document.getElementById('learn-lab')
+//
+// labs.addEventListener('change', () => {
+// 	if (labs.checked) {
+// 		movChairs.checked = false;
+// 		movTables.checked = false;
+// 		movChairs.disabled = true;
+// 		movTables.disabled = true;
+// 	} else {
+// 		movChairs.disabled = false;
+// 		movTables.disabled = false;
+// 	}
+// })
