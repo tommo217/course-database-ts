@@ -27,7 +27,7 @@ function readDatasetFromDisk(idString: string): Room[] | Section[] {
 }
 
 function readDatassetKind(idString: string) {
-	const content = fs.readFileSync(metaDir + idString, "utf-8");
+	const content = fs.readFileSync(metaDir + idString + "_meta", "utf-8");
 	const kind = JSON.parse(content)["kind"];
 	if (kind === InsightDatasetKind.Courses.toString()) {
 		return InsightDatasetKind.Courses;

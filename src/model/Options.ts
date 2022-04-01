@@ -35,8 +35,9 @@ export class Options {
 			// single string or object containing "dir" and "keys"
 			if (input.ORDER !== undefined) {
 				this.readOrderKeys(input.ORDER);
-				return;
 			}
+
+			return;
 		}
 		throw new Error("Syntax error: missing COLUMNS or ORDER");
 	}
