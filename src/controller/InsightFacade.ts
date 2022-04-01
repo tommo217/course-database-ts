@@ -228,6 +228,7 @@ export default class InsightFacade implements IInsightFacade {
 }
 
 /**
+ * ASSUMPTION: query references a dataset that exists
  * Search for query result in current cache or on disk
  * if result size exceeds 5000, throw error.
  */

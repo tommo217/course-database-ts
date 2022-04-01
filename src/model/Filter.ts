@@ -111,7 +111,7 @@ class LogicComparison implements Filter{
 }
 
 const mComparators = ["LT", "GT", "EQ"];
-const mFields = ["avg", "pass", "fail", "audit", "year"];
+const mFields = ["avg", "pass", "fail", "audit", "year", "lat" , "lon", "seats"];
 class MComparison implements Filter{
 	public mComparator: string;
 	public idString: string;
@@ -156,7 +156,7 @@ class MComparison implements Filter{
 		// guard for non-existent & incorrectly formatted value
 		if (typeof entry[this.mfield] === "string"
 			|| entry === undefined) {
-			throw new Error("Invalid entry: " + entry[this.mfield]);
+			throw new Error("Invalid mfield entry: " + entry[this.mfield]);
 		}
 
 		return this.compareVal(entry[this.mfield] as number);
@@ -177,7 +177,8 @@ class MComparison implements Filter{
 	}
 }
 
-const sFields = ["dept", "id", "instructor", "title", "uuid"];
+const sFields = ["dept", "id", "instructor", "title", "uuid", "fullname",
+	"shortname", "number", "name", "address", "type", "furniture", "href"];
 const inputFormat = /^[*]?[^*]*[*]?$/;
 class SComparison implements Filter{
 	public idString: string;
@@ -225,7 +226,7 @@ class SComparison implements Filter{
 		// guard for non-existent & incorrectly formatted value
 		if (entry === undefined
 			|| typeof entry[this.sfield] === "number") {
-			throw new Error("Invalid entry: " + entry[this.sfield]);
+			throw new Error("Invalid sfield entry: " + entry[this.sfield]);
 		}
 
 		return this.compareStr(entry[this.sfield] as string);
