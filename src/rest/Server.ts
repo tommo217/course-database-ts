@@ -22,7 +22,7 @@ export default class Server {
 		// NOTE: you can serve static frontend files in from your express server
 		// by uncommenting the line below. This makes files in ./frontend/public
 		// accessible at http://localhost:<port>/
-		// this.express.use(express.static("./frontend/public"))
+		this.express.use(express.static("./frontend/public"));
 	}
 
 	/**
@@ -144,13 +144,13 @@ export default class Server {
 	private static query(req: Request, res: Response) {
 		// {"WHERE": {"AND": [{"IS": { "courses_dept": "math"}},{"IS":{ "courses_id": "200"}},{"GT": { "courses_year": 2000}},{"LT": { "courses_year": 2019}}]}
 		// console.log("body type: " + typeof req.body);
-		// console.log("body: " + req.body);
+		// console.log(req.body["WHERE"]);
 		Server.facade.performQuery(req.body).then((arr) => {
 			// console.log(arr);
 			res.status(200).json({result: arr});
 		}).catch((err) => {
 			// console.log(err);
-			res.status(400).json({error: err});
+			res.status(400).json({error: err.message});
 		});
 	}
 
