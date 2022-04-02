@@ -20,15 +20,19 @@ point for determining the evaluation standards of the current year.
 
 #### Definitions of Done(s)
 <ins>Scenario 1: Valid Search Criteria</ins>  
-Given: the user is on the query page for course information  
+Given: the user is on the Historical Average section of the query page  
 When: a valid pair of course code and time range is entered, and "search" is clicked  
 Then: the website displays the name and average score of the section in the specified period
 
 <ins>Scenario 2: Invalid Search Criteria</ins>  
-Given: the user is on the query page for course information   
+Given: the user is on the Historical Average section of the query page   
 When: either an invalid course code or time range is entered, and "search" is clicked  
-Then: the website shows red text over the invalid field
+Then: the website shows error and highlights the invalid field, and prompts the user to enter again   
 
+<ins>Scenario 3: Valid Search Criteria, Empty Result</ins>   
+Given: the user is on the Historical Average section of the query page   
+When: a valid pair of course code and time range is entered, and "search" is clicked   
+Then: the website indicates that the query result is empty
 
 ## User Story 2
 As an event organiser, I want to be able to find classrooms with at least 20 seats and
@@ -36,15 +40,20 @@ movable tables, so that group discussions can be carried out.
 
 #### Definitions of Done(s) 
 <ins>Scenario 1: Valid Search Criteria</ins>  
-Given: The user is on the room searching page/section  
+Given: The user is on the room searching section  
 When: The user enters a valid 'minimum seats' number and selects the desired furniture type(s), 
 and then clicks "search".  
 Then: the website shows a table listing the information of rooms that fit the criteria.  
 
 <ins>Scenario 2: Invalid Search Criteria</ins>  
-Given: The user is on the room searching page/section   
-When: The user enters an invalid 'minimum seats' number  
-Then: The website remains in search page and shows the user no room with such capacity is found.
+Given: The user is on the room searching section   
+When: The user provides an invalid furniture type 
+Then: the website shows red text next to the invalid field
+
+<ins>Scenario 3: Valid Search, Empty Result</ins>  
+Given: The user is on the room searching section   
+When: The user provides a valid criteria with no matching rooms
+Then: the website indicates that the query result is empty
 
 
 
