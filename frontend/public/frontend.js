@@ -16,6 +16,10 @@ function sendData(form, formNum) {
 		query = formToQuery2(FD);
 	}
 
+	if (query['error'] === true) {
+		return;
+	}
+
 	let resultTable = formNum === 1 ? tableWrapper1 : tableWrapper2;
 
 	console.log(query)
@@ -48,6 +52,8 @@ let form1 = document.getElementById( "query1" );
 // ...and take over its submit event.
 form1.addEventListener( "submit", function ( event ) {
 	event.preventDefault();
+	clearWarnings();
+	clearResponseTable();
 	sendData(form1, 1);
 } );
 
@@ -55,15 +61,22 @@ let form2 = document.getElementById("query2");
 
 form2.addEventListener( "submit", function ( event ) {
 	event.preventDefault();
+	clearWarnings();
+	clearResponseTable();
 	sendData(form2, 2);
 } );
 
 // parse formData as insightFacade query
 function formToQuery1(formData) {
 	let sectionDept = formData.get('sectionDept');
-	let sectionId = formData.get('sectionId').toString();
+	let sectionId = String(formData.get('sectionId')).padStart(3, '0');
 	let yearGt = Number(formData.get('yearGt'));
 	let yearLt = Number(formData.get('yearLt'));
+
+	if (yearGt >= yearLt) {
+		invalidYearsWarning();
+		return {"error": true}
+	}
 
 	let query = {
 		"WHERE": {
@@ -110,10 +123,16 @@ function formToQuery2(formData) {
 	let minSeats = trackedMinSeats;
 	let option = formData.get('furniture');
 
-	console.log("DEBUG MIN SEATS: "+ minSeats)
-	console.log("DEBUG : " + option);
-
 	let [optionId, furniturePref] = optionToQueryComponent(option);
+
+	console.log("DEBUG MIN SEATS: "+ minSeats)
+	console.log("DEBUG option: " + option);
+	console.log("DEBUG OptionId: " + optionId);
+
+	if (optionId < 0){
+		outOfRangeWarning();
+		return {"error": true}
+	}
 
 	if (optionId !== 0) {
 		query = {
@@ -154,9 +173,29 @@ function formToQuery2(formData) {
 	return JSON.stringify(query);
 }
 
+function outOfRangeWarning() {
+	let inputElem = document.getElementById('input-warning');
+
+	let warningTxt = document.createElement('label');
+	warningTxt.append(document.createTextNode("Invalid Furniture! Choose from the drop-down"));
+	warningTxt.setAttribute('id', 'warningTxt');
+	warningTxt.style.color = "#DC143C";
+	inputElem.appendChild(warningTxt);
+}
+
+function invalidYearsWarning() {
+	let inputElem = document.getElementById('year-warning');
+
+	let warningTxt = document.createElement('label');
+	warningTxt.append(document.createTextNode("'From Year' must be smaller than 'To Year'."));
+	warningTxt.setAttribute('id', 'warningTxt');
+	warningTxt.style.color = "#DC143C";
+	inputElem.appendChild(warningTxt);
+}
+
 function optionToQueryComponent(option) {
 	let queryComponent = {};
-	let optionId = 0;
+	let optionId = -1;
 
 	for (let i = 0; i < furnitureList.options.length; i++) {
 		if (furnitureList.options[i].value === option) {
@@ -211,8 +250,14 @@ function clearResponseTable() {
 	}
 }
 
+function clearWarnings() {
+	const warning = document.getElementById("warningTxt");
+	if (warning !== null) {
+		warning.remove();
+	}
+}
+
 function printResult(responseText, element) {
-	clearResponseTable();
 
 	let response = JSON.parse(responseText);
 	let resData = response['result'];
@@ -221,7 +266,14 @@ function printResult(responseText, element) {
 	if (resData.length === 0) {
 		let responseTxt = document.createElement('label');
 		responseTxt.appendChild(document.createElement('br'));
-		responseTxt.append(document.createTextNode("Empty Result!"));
+		let errorTxt = "No matches found. "
+
+		if (element.id === "table-wrapper-1") {
+			errorTxt = "No matches found. The course does not exist in the year range provided."
+		} else {
+			errorTxt = "No matches found. Try lower the minimum seats or change furniture types. "
+		}
+		responseTxt.append(document.createTextNode(errorTxt));
 		responseTxt.setAttribute('id', 'responseText');
 		responseTxt.style.color = "#8D8D8D";
 		element.appendChild(responseTxt);
@@ -274,18 +326,8 @@ field.addEventListener('input', function (e) {
 	trackedMinSeats = e.target.value;
 });
 
-// var movChairs = document.getElementById('movable-chairs')
-// var movTables = document.getElementById('movable-tables')
-// var labs = document.getElementById('learn-lab')
-//
-// labs.addEventListener('change', () => {
-// 	if (labs.checked) {
-// 		movChairs.checked = false;
-// 		movTables.checked = false;
-// 		movChairs.disabled = true;
-// 		movTables.disabled = true;
-// 	} else {
-// 		movChairs.disabled = false;
-// 		movTables.disabled = false;
-// 	}
-// })
+var furnitureInput = document.getElementById('furniture');
+
+furnitureInput.addEventListener('input', (e) => {
+	clearWarnings();
+})
