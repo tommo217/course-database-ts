@@ -3,7 +3,7 @@ import * as http from "http";
 import cors from "cors";
 import InsightFacade from "../controller/InsightFacade";
 import * as fs from "fs-extra";
-import {InsightDatasetKind} from "../controller/IInsightFacade";
+import {InsightDatasetKind, InsightError, NotFoundError} from "../controller/IInsightFacade";
 
 export default class Server {
 	private readonly port: number;
@@ -88,12 +88,32 @@ export default class Server {
 		// http://localhost:4321/echo/hello
 		this.express.get("/echo/:msg", Server.echo);
 		// TODO: your other endpoints should go here
+		// hard coded to add course and room
 		this.express.put("/addCourse", Server.addCourse);
 		this.express.put("/addRoom", Server.addRoom);
-		this.express.get("/list", Server.facade.listDatasets);
+		// this.express.get("/list", Server.facade.listDatasets);
 		this.express.post("/query", Server.query);
 		this.express.put("/dataset/:id/:kind", Server.dataset);
+		this.express.delete("/delete/:id", Server.deleteDataset);
+		this.express.get("/datasets", Server.list);
+	}
 
+	private static deleteDataset(req: Request, res: Response) {
+		Server.facade.removeDataset(req.params.id).then((str) => {
+			res.status(200).json({result: str});
+		}).catch((err) => {
+			if(err === InsightError) {
+				res.status(400).json({error: err});
+			} else {
+				res.status(404).json({error: "No such dataset found"});
+			}
+		});
+	}
+
+	private static list(req: Request, res: Response) {
+		Server.facade.listDatasets().then((arr) => {
+			res.status(200).json({result: arr});
+		});
 	}
 
 	private static dataset(req: Request, res: Response) {
