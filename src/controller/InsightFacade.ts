@@ -3,7 +3,7 @@ import {
 	InsightDataset,
 	InsightDatasetKind,
 	InsightError,
-	InsightResult,
+	InsightResult, NotFoundError,
 	ResultTooLargeError
 } from "./IInsightFacade";
 import {Indexable, Section} from "./Section";
@@ -152,7 +152,7 @@ export default class InsightFacade implements IInsightFacade {
 				}
 				return resolve(id);
 			} else {
-				return reject(new InsightError("ID does not exist."));
+				return reject(new NotFoundError("id not found."));
 			}
 		});
 	}
