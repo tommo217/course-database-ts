@@ -94,7 +94,7 @@ export default class Server {
 		// this.express.get("/list", Server.facade.listDatasets);
 		this.express.post("/query", Server.query);
 		this.express.put("/dataset/:id/:kind", Server.dataset);
-		this.express.delete("/delete/:id", Server.deleteDataset);
+		this.express.delete("/dataset/:id", Server.deleteDataset);
 		this.express.get("/datasets", Server.list);
 	}
 
@@ -103,7 +103,7 @@ export default class Server {
 			res.status(200).json({result: str});
 		}).catch((err) => {
 			if(err === InsightError) {
-				res.status(400).json({error: err});
+				res.status(400).json({error: err.message});
 			} else {
 				res.status(404).json({error: "No such dataset found"});
 			}
@@ -133,7 +133,7 @@ export default class Server {
 			res.status(200).json({result: arr});
 		}).catch((err) => {
 			// console.log("Add course fail");
-			res.status(400).json({error:err});
+			res.status(400).json({error: err.message});
 		});
 	}
 
@@ -145,7 +145,7 @@ export default class Server {
 			res.status(200).json({result: arr});
 		}).catch((err) => {
 			// console.log("Add course fail");
-			res.status(400).json({error:err});
+			res.status(400).json({error: err.message});
 		});
 	}
 
@@ -157,7 +157,7 @@ export default class Server {
 			res.status(200).json({result: arr});
 		}).catch((err) => {
 			// console.log("Add course fail");
-			res.status(400).json({error:err});
+			res.status(400).json({error: err.message});
 		});
 	}
 
@@ -183,7 +183,7 @@ export default class Server {
 			const response = Server.performEcho(req.params.msg);
 			res.status(200).json({result: response});
 		} catch (err) {
-			res.status(400).json({error: err});
+			res.status(400).json({error: "Something went wrong in Echo"});
 		}
 	}
 
