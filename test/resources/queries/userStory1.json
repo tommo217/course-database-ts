@@ -1,0 +1,43 @@
+{
+	"title": "user story1",
+	"input": {
+		"WHERE": {
+			"AND": [
+				{
+					"IS": { "courses_dept": "math"}
+				},
+				{
+					"IS":{ "courses_id": "200"}
+				},
+				{
+					"GT": { "courses_year": 2000}
+				},
+				{
+					"LT": { "courses_year": 2019}
+				}
+			]
+		},
+		"OPTIONS": {
+			"COLUMNS": [
+				"courses_dept",
+				"courses_id",
+				"overallAvg"
+			]
+		},
+		"TRANSFORMATIONS": {
+			"GROUP": [
+				"courses_dept",
+				"courses_id"
+			],
+			"APPLY": [
+				{
+					"overallAvg": {
+						"AVG": "courses_avg"
+					}
+				}
+			]
+		}
+	}
+,
+	"expected": [{"courses_dept":"math","courses_id":"200","overallAvg":67.09}]
+}

@@ -6,8 +6,80 @@
 		<link href="/style.css" rel="stylesheet" />
 	</head>
 	<body>
-		<button id="click-me-button" class="button" >Click Me!</button>
 
+	<h2>Historical Averages</h2>
+	<form id="query1">
+		<ul>
+			<li>
+				<label for="sectionDept">Department Code: </label>
+				<input type="text" id="sectionDept" name="sectionDept" pattern="([a-z])([a-z])([a-z])([a-z])">
+			</li>
+			<li>
+				<label for="sectionId">Course Code: </label>
+				<input type="number" id="sectionId" name="sectionId" min="001" max="999" step="1">
+			</li>
+			<li>
+				<label for="yearGt">From Year: </label>
+				<input type="number" id="yearGt" name="yearGt" min="1900" max="2050" step="1" >
+			</li>
+			<li>
+				<label for="yearLt">To Year: </label>
+				<input type="number" id="yearLt" name="yearLt" min="1900" max="2050" step="1">
+				<a id="year-warning">
+				</a>
+			</li>
+			<li>
+				<input type="submit" class="button" value="Search">
+			</li>
+		</ul>
+	</form>
+
+	<br>
+
+	<div class="table-wrapper" id="table-wrapper-1">
+		<label>Query Results</label>
+	</div>
+
+	<br>
+
+	<h2>Find Venues</h2>
+	<form id="query2">
+		<ul>
+			<li>
+				<label for="minSeatsRange">Minimum seats: </label>
+				<input type="range" id="minSeatsRange" name="minSeats" min="000" max="700" step="1" value="0">
+				<input type="number" id="minSeatsNum" name="minSeats"  min="000" max="700" step="1" value="0">
+			</li>
+			<li>
+				<label for="furniture">Desired furniture types:</label>
+				<input list="furniture-list" id="furniture" name="furniture"/>
+				<a id="input-warning">
+				</a>
+			</li>
+
+			<li>
+				<input type="submit" class="button" value="Search">
+			</li>
+		</ul>
+	</form>
+
+	<datalist id="furniture-list">
+		<option data-id="0" value="Any">
+		<option data-id="1" value="Movable Tabels & Chairs">
+		<option data-id="2" value="Fixed Tables & Chairs">
+		<option data-id="3" value="Fixed Tables/Movable Chairs">
+		<option data-id="4" value="Hybrid Furniture">
+		<option data-id="5" value="Learn Lab">
+	</datalist>
+
+	<br>
+
+	<div class="table-wrapper-2" id="table-wrapper-2">
+		<label>Query Results</label>
+	</div>
+
+	<br>
+	<br>
 		<script type="text/javascript" src="/frontend.js"></script>
 	</body>
 </html>
