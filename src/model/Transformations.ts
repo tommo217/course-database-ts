@@ -195,17 +195,12 @@ class ApplyRule {
 	}
 
 	private countUniques(group: InsightResult[], col: string): number {
-		let uniqueCounts = 0;
-		for (let i = 0; i < group.length; i++) {
-			if (i === 0) {
-				uniqueCounts++;
-			} else {
-				if (group[i][col] !== group[i - 1][col]) {
-					uniqueCounts++;
-				}
-			}
+		let uniqueSet = new Set();
+		for (let entry of group) {
+			uniqueSet.add(entry[col]);
 		}
-		return uniqueCounts;
+
+		return uniqueSet.size;
 	}
 
 	private deserialize(input: any) {
