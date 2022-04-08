@@ -94,18 +94,22 @@ export class Options {
 	}
 
 	// filter the columns in options
-	public filterColumns(res: InsightResult): InsightResult {
+	public filterColumns(res: InsightResult, applyKeys: string[]): InsightResult {
 		let transformed: InsightResult = {};
 		let cell: number | string | undefined;
 		this.columns.forEach((col) => {
 			if (sFields.concat(mFields).includes(col)){
+				// s or m fields
 				cell = res[this.idString + "_" + col];
-			} else {
-				cell = res[col];
-			}
-			if (cell !== undefined) {
 				transformed[this.idString + "_" + col] = cell;
+			} else if (applyKeys.includes(col)){
+				// apply keys
+				cell = res[col];
+				transformed[col] = cell;
 			}
+			// if (cell !== undefined) {
+			// 	transformed[this.idString + "_" + col] = cell;
+			// }
 		});
 		return transformed;
 	}

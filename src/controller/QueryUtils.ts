@@ -67,7 +67,7 @@ function processRow(entry: Indexable, query: Query, results: InsightResult[]) {
 		if (!query.options.haveTransform) {
 				// simple re-cast of columns
 			let res = query.options.transformToResult(entry);
-			res = query.options.filterColumns(res);
+			res = query.options.filterColumns(res, []);
 			results.push(res);
 		} else {
 			results.push(entry as InsightResult);
