@@ -261,12 +261,13 @@ function queryForResult(q: Query): InsightResult[]{
 	// apply transformations if needed
 	if (q.transformations !== undefined) {
 		results = q.transformations.transformResults(results);
-		results.map((res) => {
-			return q.options.filterColumns(res);
+		const applyKeys = q.transformations.applyKeys;
+		results = results.map((res) => {
+			return q.options.filterColumns(res, applyKeys);
 		});
 	}
 
-	// TODO optimise
+	// check if result size exceeds limit
 	if (results.length > resultLimit) {
 		throw new ResultTooLargeError("query result exceeds " + resultLimit);
 	}

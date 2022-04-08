@@ -10,11 +10,13 @@ export class Transformations {
 	public idString: string;
 	public groupBy: string[];
 	public applyRules: ApplyRule[];
+	public applyKeys: string[];
 
 	constructor(input: any) {
 		this.idString = "";
 		this.groupBy = [];
 		this.applyRules = [];
+		this.applyKeys = [];
 		this.deserialize(input);
 	}
 
@@ -113,6 +115,10 @@ export class Transformations {
 			} else if (this.idString !== rule.idString) {
 				throw new Error("Transformation Syntax: multiple db referenced: " + rule.idString);
 			}
+			if (this.applyKeys.includes(rule.applyKey)) {
+				throw new Error("Transformation: duplicate applykeys: " + rule.applyKey);
+			}
+			this.applyKeys.push(rule.applyKey);
 			// check columns
 			this.applyRules.push(rule);
 		}
@@ -160,9 +166,15 @@ class ApplyRule {
 	 */
 	public apply(group: InsightResult[]) {
 		if (this.applyToken === "MAX") {
+			if (!mFields.includes(this.key)) {
+				throw new Error("Invalid key type in MAX");
+			}
 			let sorted = sortPreResultsWithOrder(group, [this.key]);
 			this.applyResult = sorted[sorted.length - 1][this.key];
 		} else if (this.applyToken === "MIN") {
+			if (!mFields.includes(this.key)) {
+				throw new Error("Invalid key type in MIN");
+			}
 			let sorted = sortPreResultsWithOrder(group, [this.key]);
 			this.applyResult = sorted[0][this.key];
 		} else if (this.applyToken === "AVG") {
@@ -176,7 +188,7 @@ class ApplyRule {
 			if (!mFields.includes(this.key)) {
 				throw new Error("Invalid key type in SUM");
 			}
-			this.applyResult = this.sumColumn(group, this.key).toNumber();
+			this.applyResult = Number(this.sumColumn(group, this.key).toFixed(2));
 		}
 	}
 
