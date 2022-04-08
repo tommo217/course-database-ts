@@ -94,7 +94,6 @@ export default class InsightFacade implements IInsightFacade {
 							// store in cache
 							coursesCache[id] = sectionData;
 							// write to disc
-							// numRows = sectionData.length;
 							utils.writeToDisc(id, kind, numRows, sectionData);
 							// resolve with list of stored datasets
 							return resolve(Object.keys(coursesCache));
@@ -107,11 +106,8 @@ export default class InsightFacade implements IInsightFacade {
 						return reject(new InsightError("No rooms folder."));
 					}
 					// C2 implementation
-					// zip.file("index.htm")
 					ZipObj.folder("rooms").file("index.htm").async("string").then(async (indexString: string) => {
-						// utils.addRoom(ZipObj, indexString, roomData);
 						let buildingList = utils.getBuilding(indexString);
-						// numRows = utils.loadRoom(ZipObj, await buildingList, roomData);
 						await utils.loadRoom(ZipObj, await buildingList, roomData);
 						if(roomData.length > 0) {
 							roomsCache[id] = roomData;
@@ -122,7 +118,7 @@ export default class InsightFacade implements IInsightFacade {
 						}
 					});
 				} else {
-					return Promise.reject("Unknown dataset kind.");
+					return Promise.reject(new InsightError("Unknown dataset kind."));
 				}
 			}).catch( (err)=> {
 				return reject(new InsightError(err));
@@ -188,7 +184,6 @@ export default class InsightFacade implements IInsightFacade {
 			fs.readdir(metaDir, (err, files) => {
 				files.forEach((file) => {
 					let datasetMeta; // metadata of one dataset
-					// let datasetArr: InsightDataset[] = [];
 					try{
 						const metaContent = fs.readFileSync(metaDir + file).toString("utf-8");
 						datasetMeta = JSON.parse(metaContent);
