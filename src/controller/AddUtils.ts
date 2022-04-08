@@ -1,4 +1,4 @@
-import {InsightDatasetKind, InsightError} from "./IInsightFacade";
+import {InsightDatasetKind} from "./IInsightFacade";
 import * as fs from "fs-extra";
 import {Section} from "./Section";
 import {dataDir, metaDir} from "./InsightFacade";
@@ -56,7 +56,6 @@ export class AddUtils {
 				// check all sections, extract query keys and put into Section object, skip invalid sections
 				this.createSectionObjects(sectionsArr, sectionData);
 			}
-				// return sectionData.length;
 		}
 		return sectionData.length;
 	}
@@ -68,7 +67,6 @@ export class AddUtils {
 			fs.outputFileSync((dataDir + datasetID), datasetObj);
 			fs.outputFileSync((metaDir + datasetID + "_meta"), metaData);
 		} catch (e) {
-			// return Promise.reject(new InsightError("Write to disk error"));
 			console.log(e);
 		}
 	}
@@ -141,7 +139,6 @@ export class AddUtils {
 				this.searchElement("td", "class", "views-field views-field-nothing", tr, hrefArr);
 				if (hrefArr.length > 0) {
 					href = hrefArr[0].childNodes[1].attrs[0].value.trim().replace(".", "rooms");
-					// building.href.replace(".", "rooms");
 				}
 				let building = new Building(fullName, code, address, href);
 				promises.push(this.getGeolocation(building));
@@ -153,7 +150,6 @@ export class AddUtils {
 			}
 			return Promise.resolve(buildingList);
 		});
-		// throw new Error();
 	}
 
 	public getGeolocation(building: Building): Promise<void> {
@@ -171,7 +167,7 @@ export class AddUtils {
 					buildingList.push(building);
 					return resolved ();
 				});
-			}).on("error", (err: Error) => {
+			}).on("error", () => {
 				// skip this building, do nothing
 				return resolved ();
 			});
